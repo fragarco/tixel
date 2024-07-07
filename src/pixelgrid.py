@@ -1,9 +1,9 @@
 import tkinter as tk
 import enum
 
-MAX_XPIXELS = 16
-MAX_YPIXELS = 16
-PIXEL_SIZE = 40
+MAX_XPIXELS = 24
+MAX_YPIXELS = 24
+PIXEL_SIZE = 30
 
 class PixelGridMode(enum.Enum):
     DRAWING     = 0

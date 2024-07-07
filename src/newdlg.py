@@ -48,7 +48,7 @@ class NewDialog(tk.Toplevel):
         self.sizes = ttk.Combobox(
             self.frame,
             state="readonly",
-            values=['8x8', '16x8', '16x16']
+            values=['8x8', '16x8', '16x16', '24x16', '16x24', '24x24']
         )
         self.sizes.current(2)
         self.sizes.grid(row=2, column=1, columnspan=2, sticky='nw', pady=5)
@@ -59,7 +59,7 @@ class NewDialog(tk.Toplevel):
 
     def on_create(self):
         self.mode = self.modes.current()
-        sizes = [(8,8), (16,8), (16,16)]
+        sizes = [(8,8), (16,8), (16,16), (24,16), (16,24), (24,24)]
         self.size = sizes[self.sizes.current()]
         self.destroy()
 

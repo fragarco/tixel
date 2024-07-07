@@ -142,7 +142,8 @@ class TixelApp:
 
     def updatetitle(self):
         prj = self.current_prj if self.current_prj != "" else "unsaved"
-        self.root.title("Tixel - " + prj)
+        title = f"Tixel - {prj} ({self.width}x{self.height} mode {self.scrnmode})"
+        self.root.title(title)
 
     def run(self):
         self.updatetitle()
