@@ -6,6 +6,7 @@ from toolframe import ToolFrame, Tools
 from menu import AppMenu, MenuActions
 from colorbar import ColorBar
 from newdlg import NewDialog
+from codedlg import CodeDialog
 import json
 
 class TixelApp:
@@ -103,6 +104,15 @@ class TixelApp:
     def menu_edit_action(self, action):
         print("TODO edit action:", action)
 
+    def code_view(self):
+        codewin = CodeDialog()
+        self.root.eval(f'tk::PlaceWindow {str(codewin)} center')
+        self.root.wait_window(codewin)
+
+    def menu_code_action(self, action):
+        self.code_view()
+        print("TODO code action:", action)
+
     def menu_help_action(self, action):
         print("TODO help action:", action)
 
@@ -121,6 +131,7 @@ class TixelApp:
         self.menu = AppMenu(self.root)
         self.menu.init_file(self.menu_file_action)
         self.menu.init_edit(self.menu_edit_action)
+        self.menu.init_code(self.menu_code_action)
         self.menu.init_help(self.menu_help_action)
         self.root.config(menu=self.menu.menu_main)
 

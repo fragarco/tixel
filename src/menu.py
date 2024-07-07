@@ -12,7 +12,11 @@ class MenuActions(enum.Enum):
     EDIT_COPY = 21
     EDIT_PASTE = 22
 
-    HELP_ABOUT = 30
+    CODE_BASIC = 30
+    CODE_C = 31
+    CODE_ASM = 32
+
+    HELP_ABOUT = 90
 
 
 class AppMenu:
@@ -31,12 +35,18 @@ class AppMenu:
         self.menu_main.add_cascade(label="File", menu=self.menu_file)
 
     def init_edit(self, listener):
-        # Crea dos menus desplegables mas
         self.menu_edit = tk.Menu(self.menu_main, tearoff=0)
         self.menu_edit.add_command(label="Cut", command=lambda: listener(MenuActions.EDIT_CUT))
         self.menu_edit.add_command(label="Copy", command=lambda: listener(MenuActions.EDIT_COPY))
         self.menu_edit.add_command(label="Paste", command=lambda: listener(MenuActions.EDIT_PASTE))
         self.menu_main.add_cascade(label="Edit", menu=self.menu_edit)
+
+    def init_code(self, listener):
+        self.menu_code = tk.Menu(self.menu_main, tearoff=0)
+        self.menu_code.add_command(label="BASIC", command=lambda: listener(MenuActions.CODE_BASIC))
+        self.menu_code.add_command(label="C", command=lambda: listener(MenuActions.CODE_C))
+        self.menu_code.add_command(label="Assembly", command=lambda: listener(MenuActions.CODE_ASM))
+        self.menu_main.add_cascade(label="Code", menu=self.menu_code)
 
     def init_help(self, listener):
         self.menu_help = tk.Menu(self.menu_main, tearoff=0)
