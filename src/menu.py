@@ -8,13 +8,14 @@ class MenuActions(enum.Enum):
     FILE_SAVE_AS = 13
     FILE_EXIT = 14
 
-    EDIT_CUT = 20
-    EDIT_COPY = 21
-    EDIT_PASTE = 22
+    EDIT_UNDO = 20
 
-    CODE_BASIC = 30
-    CODE_C = 31
-    CODE_ASM = 32
+    TRANSFORM_VERT = 31
+    TRANSFORM_HOR = 32
+
+    CODE_BASIC = 40
+    CODE_C = 41
+    CODE_ASM = 42
 
     HELP_ABOUT = 90
 
@@ -28,7 +29,7 @@ class AppMenu:
         self.menu_file = tk.Menu(self.menu_main, tearoff=0)
         self.menu_file.add_command(label='New...', command=lambda: listener(MenuActions.FILE_NEW))
         self.menu_file.add_command(label="Open Project...", command=lambda: listener(MenuActions.FILE_OPEN))
-        self.menu_file.add_command(label="Save Project", command=lambda: listener(MenuActions.FILE_SAVE))
+        self.menu_file.add_command(label="Save Project", accelerator='Ctrl+S', command=lambda: listener(MenuActions.FILE_SAVE))
         self.menu_file.add_command(label="Save Project As...", command=lambda: listener(MenuActions.FILE_SAVE_AS))
         self.menu_file.add_separator()
         self.menu_file.add_command(label="Exit", command=lambda: listener(MenuActions.FILE_EXIT))
@@ -36,10 +37,14 @@ class AppMenu:
 
     def init_edit(self, listener):
         self.menu_edit = tk.Menu(self.menu_main, tearoff=0)
-        self.menu_edit.add_command(label="Cut", command=lambda: listener(MenuActions.EDIT_CUT))
-        self.menu_edit.add_command(label="Copy", command=lambda: listener(MenuActions.EDIT_COPY))
-        self.menu_edit.add_command(label="Paste", command=lambda: listener(MenuActions.EDIT_PASTE))
+        self.menu_transform.add_command(label="Undo", accelerator='Ctrl+Z', command=lambda: listener(MenuActions.EDIT_UNDO))
         self.menu_main.add_cascade(label="Edit", menu=self.menu_edit)
+
+    def init_transform(self, listener):
+        self.menu_transform = tk.Menu(self.menu_main, tearoff=0)
+        self.menu_transform.add_command(label="Vertically", command=lambda: listener(MenuActions.TRANSFORM_VERT))
+        self.menu_transform.add_command(label="Horizontally", command=lambda: listener(MenuActions.TRANSFORM_HOR))
+        self.menu_main.add_cascade(label="Transform", menu=self.menu_transform)
 
     def init_code(self, listener):
         self.menu_code = tk.Menu(self.menu_main, tearoff=0)

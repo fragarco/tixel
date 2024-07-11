@@ -4,7 +4,7 @@ import enum
 class Tools(enum.Enum):
     DRAW    = 0
     ERASE   = 1
-    SELECT  = 2
+    REPLACE = 2
     FILL    = 3
 
 class ToolFrame(tk.LabelFrame):
@@ -39,10 +39,16 @@ class ToolFrame(tk.LabelFrame):
         tool = tk.Radiobutton(self, text='Erase', value='Erase', variable=self.selected, command=lambda: listener(Tools.ERASE))
         tool.grid(row=1, column=0, sticky='w')
         self.tools.append(tool)
+        tool = tk.Radiobutton(self, text='Replace', value='Replace', variable=self.selected, command=lambda: listener(Tools.REPLACE))
+        tool.grid(row=2, column=0, sticky='w')
+        self.tools.append(tool)
+        tool = tk.Radiobutton(self, text='Fill', value='Fill', variable=self.selected, command=lambda: listener(Tools.FILL))
+        tool.grid(row=3, column=0, sticky='w')
+        self.tools.append(tool)
 
-        self.colorbtn1 = self._create_colorview('Draw btn1', 2, 0, self.color1)
-        self.colorbtn2 = self._create_colorview('Draw btn2', 3, 0, self.color2)
-        self.bgcolorbtn = self._create_colorview('Background', 4, 0, self.bgcolor)
+        self.colorbtn1 = self._create_colorview('Draw btn1', 4, 0, self.color1)
+        self.colorbtn2 = self._create_colorview('Draw btn2', 5, 0, self.color2)
+        self.bgcolorbtn = self._create_colorview('Erase', 6, 0, self.bgcolor)
 
     def draw_color(self, button, color):
         if button == 0:

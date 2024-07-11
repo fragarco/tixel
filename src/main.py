@@ -16,6 +16,7 @@ class TixelApp:
         self.scrnmode = 1
         self.current_prj = ""
         self.bgcolor = "#FFFFFF"
+        self.modified = True
 
         self.root = root
         self.setup_menu()
@@ -55,6 +56,7 @@ class TixelApp:
                     self.canvas.set_color(1, data['btn2color'])
                     self.canvas.set_bgcolor(self.bgcolor)
                 self.current_prj = f
+                self.modified = False
                 self.updatetitle()
             except Exception as e:
                 messagebox.showerror("Open error", str(e))
@@ -62,7 +64,7 @@ class TixelApp:
     def project_save(self, f):
         try:
             data = {}
-            data['mode'] = self.scrmode
+            data['mode'] = self.scrnmode
             data['width'] = self.width
             data['height'] = self.height
             data['btn1color'], data['btn2color'] = self.tool_frame.get_currentcolors()
@@ -72,6 +74,7 @@ class TixelApp:
                 content = json.dumps(data)
                 fd.write(content)
             self.current_prj = f
+            self.modified = False
             self.updatetitle()
         except Exception as e:
             messagebox.showerror("Save error", str(e))
@@ -102,7 +105,20 @@ class TixelApp:
             self.root.destroy()
 
     def menu_edit_action(self, action):
-        print("TODO edit action:", action)
+        if action == MenuActions.EDIT_UNDO:
+            self.canvas.undo_pop()
+            self.modified = True
+            self.updatetitle()
+
+    def menu_transform_action(self, action):
+        if action == MenuActions.TRANSFORM_VERT:
+            self.canvas.mirrorvert()
+            self.modified = True
+            self.updatetitle()
+        elif action == MenuActions.TRANSFORM_HOR:
+            self.canvas.mirrorhor()
+            self.modified = True
+            self.updatetitle()
 
     def code_view(self):
         codewin = CodeDialog()
@@ -121,16 +137,23 @@ class TixelApp:
             self.canvas.set_behaviour(PixelGridMode.DRAWING)
         elif newtool == Tools.ERASE:
             self.canvas.set_behaviour(PixelGridMode.EREASING)
+        elif newtool == Tools.REPLACE:
+            self.canvas.set_behaviour(PixelGridMode.REPLACING)
+        elif newtool == Tools.FILL:
+            self.canvas.set_behaviour(PixelGridMode.FILLING)
 
     def newproject(self):
         self.canvas.set_bgcolor(self.bgcolor)
         self.canvas.reconfigure(self.scrnmode, self.width, self.height, self.bgcolor)
         self.tool_frame.erase_color(self.bgcolor)
+        self.modified = True
+        self.updatetitle()
 
     def setup_menu(self):
         self.menu = AppMenu(self.root)
         self.menu.init_file(self.menu_file_action)
         self.menu.init_edit(self.menu_edit_action)
+        self.menu.init_transform(self.menu_transform_action)
         self.menu.init_code(self.menu_code_action)
         self.menu.init_help(self.menu_help_action)
         self.root.config(menu=self.menu.menu_main)
@@ -154,6 +177,7 @@ class TixelApp:
     def updatetitle(self):
         prj = self.current_prj if self.current_prj != "" else "unsaved"
         title = f"Tixel - {prj} ({self.width}x{self.height} mode {self.scrnmode})"
+        title = title + ' *' if self.modified else ''
         self.root.title(title)
 
     def run(self):
