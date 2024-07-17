@@ -22,22 +22,25 @@ class MenuActions(enum.Enum):
 
 class AppMenu:
     def __init__(self, root):
-        self.root = root
         self.menu_main = tk.Menu(root)
+        root.configure(menu=self.menu_main)
+        self.root = root
 
     def init_file(self, listener):
         self.menu_file = tk.Menu(self.menu_main, tearoff=0)
         self.menu_file.add_command(label='New...', command=lambda: listener(MenuActions.FILE_NEW))
         self.menu_file.add_command(label="Open Project...", command=lambda: listener(MenuActions.FILE_OPEN))
         self.menu_file.add_command(label="Save Project", accelerator='Ctrl+S', command=lambda: listener(MenuActions.FILE_SAVE))
+        self.root.bind_all('<Control-s>', lambda ev: listener(MenuActions.FILE_SAVE))
         self.menu_file.add_command(label="Save Project As...", command=lambda: listener(MenuActions.FILE_SAVE_AS))
         self.menu_file.add_separator()
         self.menu_file.add_command(label="Exit", command=lambda: listener(MenuActions.FILE_EXIT))
         self.menu_main.add_cascade(label="File", menu=self.menu_file)
-
+        
     def init_edit(self, listener):
         self.menu_edit = tk.Menu(self.menu_main, tearoff=0)
-        self.menu_transform.add_command(label="Undo", accelerator='Ctrl+Z', command=lambda: listener(MenuActions.EDIT_UNDO))
+        self.menu_edit.add_command(label="Undo", accelerator='Ctrl+Z', command=lambda: listener(MenuActions.EDIT_UNDO))
+        self.root.bind_all('<Control-z>', lambda ev: listener(MenuActions.EDIT_UNDO))
         self.menu_main.add_cascade(label="Edit", menu=self.menu_edit)
 
     def init_transform(self, listener):

@@ -60,19 +60,23 @@ class PixelGrid(tk.Frame):
         tags = self.canvas.gettags(cell)
         if 'out' not in tags:
             if self.behaviour == PixelGridMode.EREASING:
-                self.undo_append()
-                self.canvas.itemconfigure(cell, fill=self.fill_bg)
+                oldcolor = self.canvas.itemcget(cell, "fill")
+                if oldcolor != color:
+                    self.undo_append()
+                    self.canvas.itemconfigure(cell, fill=self.fill_bg)
             elif self.behaviour == PixelGridMode.DRAWING:
-                self.undo_append()
-                self.canvas.itemconfigure(cell, fill=color)
+                oldcolor = self.canvas.itemcget(cell, "fill")
+                if oldcolor != color:
+                    self.undo_append()
+                    self.canvas.itemconfigure(cell, fill=color)
             elif self.behaviour == PixelGridMode.REPLACING:
                 self.undo_append()
                 self.replace_color(cell, color)
             elif self.behaviour == PixelGridMode.FILLING:
-                self.undo_append()
                 pos = tags[0].split(',')
                 pixels = [(int(pos[0]), int(pos[1]))]
                 oldcolor = self.canvas.itemcget(cell, "fill")
+                self.undo_append()
                 self.fill_color(pixels, oldcolor, color)
 
     def get_pixels(self):
@@ -163,15 +167,18 @@ class PixelGrid(tk.Frame):
 
     def undo_reset(self):
         self.undo_stack = []
+        print("AAA undo reset", len(self.undo_stack))
 
     def undo_append(self):
         pixels = self.get_pixels()
         self.undo_stack.append(pixels)
+        print("AAA undo append", len(self.undo_stack))
         if len(self.undo_stack) > 5:
             self.undo_stack = self.undo_stack[1:]
 
     def undo_pop(self):
         if len(self.undo_stack) > 0:
+            print("AAA undo pop", len(self.undo_stack))
             pixels = self.undo_stack[-1]
             self.set_pixels(pixels)
             self.undo_stack = self.undo_stack[0:-1]
