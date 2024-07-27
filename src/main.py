@@ -7,6 +7,8 @@ from menu import AppMenu, MenuActions
 from colorbar import ColorBar
 from newdlg import NewDialog
 from codedlg import CodeDialog
+from imgconv import ImgConverter
+from pathlib import Path
 import json
 
 class TixelApp:
@@ -114,14 +116,26 @@ class TixelApp:
             self.canvas.mirrorhor()
             self.updatetitle()
 
-    def code_view(self):
+    def code_view(self, content):
         codewin = CodeDialog()
         self.root.eval(f'tk::PlaceWindow {str(codewin)} center')
+        codewin.set_code(content)
         self.root.wait_window(codewin)
 
     def menu_code_action(self, action):
-        self.code_view()
-        print("TODO code action:", action)
+        conv = ImgConverter(self.width, self.height, self.scrnmode)
+        sprite = self.canvas.get_pixels()
+        name = Path(self.current_prj).stem
+        code = ""
+        if action == MenuActions.CODE_C:
+            code = conv.code_c(sprite, name)
+        elif action == MenuActions.CODE_ASM:
+            code = conv.code_asm(sprite, name)
+        else:
+            code = conv.code_bas(sprite, name)
+        # convert from List[str] to str
+        code = ''.join(code)
+        self.code_view(code)
 
     def menu_help_action(self, action):
         print("TODO help action:", action)

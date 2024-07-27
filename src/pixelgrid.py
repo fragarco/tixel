@@ -167,18 +167,15 @@ class PixelGrid(tk.Frame):
 
     def undo_reset(self):
         self.undo_stack = []
-        print("AAA undo reset", len(self.undo_stack))
 
     def undo_append(self):
         pixels = self.get_pixels()
         self.undo_stack.append(pixels)
-        print("AAA undo append", len(self.undo_stack))
         if len(self.undo_stack) > 5:
             self.undo_stack = self.undo_stack[1:]
 
     def undo_pop(self):
         if len(self.undo_stack) > 0:
-            print("AAA undo pop", len(self.undo_stack))
             pixels = self.undo_stack[-1]
             self.set_pixels(pixels)
             self.undo_stack = self.undo_stack[0:-1]

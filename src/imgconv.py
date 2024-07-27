@@ -3,8 +3,8 @@
 """
 IMGCONV.PY by Javier Garcia
 
-Tool that converts regular image files to CPC images. The conversion depends
-on the screen mode, that must be specified (0 by default). As reference:
+Module that helps convert pixel images to CPC coded images. The conversion depends
+on the screen mode. As reference:
 
 Mode 2, 640×200, 2 colors
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
@@ -17,25 +17,7 @@ pixel 0 pixel 1 pixel 2 pixel 3 pixel 0 pixel 1	pixel 2 pixel 3
 Modo 0, 160×200, colors (4 bits x pixel: bit 0 bit 2 bit 1 bit 3)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1
-
-This program is free software; you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation in its version 3.
-
-This program is distributed in the hope that it will be useful
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 """
-
-import sys
-import os
-import argparse
-from PIL import Image
 
 # Array of CPC colours in the following format:
 # index     = firmware value (1-26) as it is used in INK basic instruction
@@ -172,25 +154,19 @@ class ConversionError(Exception):
     
 
 class ImgConverter:
-    def __init__(self, mode=0, palette = [0x14 for i in range(0,16)]):
+    def __init__(self, w, h, mode):
         self.mode = mode
-        self.palette = palette
+        self.palette = []
         self.img = bytearray()
-        self.imgw = 0
-        self.imgh = 0
-        self._check_palette(mode)
-        
+        self.imgw = w
+        self.imgh = h
+        self.hex2index = {}
+        for i, rgb in enumerate(CPC_RGB_COLORS):
+            self.hex2index[f'#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}'] = i
+                 
     def _colors_per_mode(self, mode):
         if mode == 0: return 16
         return 4 if mode == 1 else 2
-
-    def _check_palette(self, mode):
-        colors = self._colors_per_mode(mode)
-        if colors < len(self.palette):
-            raise ConversionError("palette has too many entries, max %d vs %d entries"%(colors, len(self.palette)))
-        for color in self.palette:
-            if color not in CPC_HW_COLORS:
-                raise ConversionError("palette includes an unknown hardware color value: %s"%(hex(color)))
 
     def _palette2colors(self):
         colors = []
@@ -203,8 +179,10 @@ class ImgConverter:
         """ colors expected as (r, g, b) values"""
         return abs(col1[0] - col2[0]) + abs(col1[1] - col2[1]) + abs(col1[2] - col2[2])
     
-    def _findcolor(self, rgbpixel, cpccolors):
+    def _findcolor(self, hexpixel, cpccolors):
         nearest = (999, -1)
+        h = hexpixel.lstrip('#')
+        rgbpixel = tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
         for i in range(0, len(cpccolors)):
             diff = (self._get_color_distance(rgbpixel, cpccolors[i]), i)
             nearest = min(nearest, diff)
@@ -231,217 +209,81 @@ class ImgConverter:
                              (self.img[i] & 0x08) >> (3 - pos)
         return data
 
-    def build_palette(self, rgbimg, mode):
+    def _build_palette(self, sprite):
         """
-        Assigns each pixel in the image to the nearest CPC color. When
+        Assigns each pixel in the image to a CPC color. When
         all pixels are assigned, the method retains the colors with more
         assignements and builds the palette. The mode sets the max number
-        of entries in the palette.
+        of allowed entries.
         """
-        w, h = rgbimg.size
-        cpccolors = [(0, i) for i in range(0, len(CPC_RGB_COLORS))]
-        for y in range(0, h):
-            for x in range(0, w):
-                pixel = rgbimg.getpixel((x, y))
-                _, colorindex = self._findcolor(pixel, CPC_RGB_COLORS)
-                pixels, fwvalue = cpccolors[colorindex]
-                cpccolors[colorindex] = (pixels + 1, fwvalue)
-        cpccolors = list(filter(lambda item: item[0] > 0, cpccolors))
-        cpccolors.sort(reverse=True)
-        colors = self._colors_per_mode(mode)
-        palette = list(map(lambda item: CPC_FW_COLORS[item[1]][0], cpccolors[0:colors]))
-        return palette
+        ocurrences = [(0, i) for i in range(0, len(CPC_RGB_COLORS))]
+        for row in range(self.imgh):
+            for col in range(self.imgw):
+                pixel = sprite[self.imgw * row + col][1]
+                index = self.hex2index[pixel]
+                ocurrences[index] = (ocurrences[index][0] + 1, index)
+        palette = list(filter(lambda item: item[0] > 0, ocurrences))
+        palette.sort(reverse=True)
+        colors = self._colors_per_mode(self.mode)
+        self.palette = list(map(lambda item: CPC_FW_COLORS[item[1]][0], palette[0:colors]))
 
-    def build_cpcimg(self, rgbimg, mode):
+    def _build_cpcimg(self, sprite):
         """
-        Convert each RGB value to the nearest CPC HW color value included in the
-        palette.
+        Convert each RGB value to a CPC HW color value included in the
+        palette. If more colors that allowed were used, the method selects
+        the nearest valid color.
         """
-        self.mode = mode
-        self.palette = self.build_palette(rgbimg, mode)
+        self._build_palette(sprite)
         palettecolors = self._palette2colors()
         self.img = bytearray()
-        self.imgw, self.imgh = rgbimg.size
         for y in range(0, self.imgh):
             for x in range(0, self.imgw):
-                pixel = rgbimg.getpixel((x, y))
+                pixel = sprite[self.imgw * y + x][1]
                 _, colorindex = self._findcolor(pixel, palettecolors)
                 self.img.extend(colorindex.to_bytes(1, 'little'))
-        if len(self.img) != (self.imgw * self.imgh):
-            raise ConversionError("CPC image size doesn't match with source image")
-
-    def write_bin(self, target, ext='.bin', cpcimg = None):
-        try:
-            data = cpcimg if cpcimg != None else self._img2mode()
-            with open(target + ext, 'wb') as fd:
-                fd.write(data)
-        except IOError as e:
-            raise ConversionError("%s couldn't be create due to %s" % (target + ext, str(e)))
-        paletteinfo = []
-        for hw in self.palette:
-            fw = CPC_HW_COLORS[hw]
-            color = CPC_FW_COLORS[fw][1]
-            paletteinfo.append("%d\t\t0x%02X\t"%(fw, hw) + str(color) + '\n')         
-        try:
-            with open(target + ext + '.info', 'w') as fd:
-                fd.writelines([
-                    "FILE: %s\n" % target + ext,
-                    "WIDTH: %d\n" % self.imgw,
-                    "HEIGHT: %d\n" % self.imgh,
-                    "MODE: %d\n" % self.mode,
-                    "PALETTE COLORS: %d\n" % len(self.palette),
-                    "\n",
-                    "FW\t\tHW\t\tRGB\n",
-                ])
-                fd.writelines(paletteinfo)
-        except IOError as e:
-            raise ConversionError("%s.inf couldn't be create due to %s" % (target + ext, str(e)))
-
-    def write_c(self, target):
-        data = self._img2mode()
-        target = target.replace('.', '_')
-        targetu = target.upper()
-        try:
-            with open(target + '.h', 'w') as fd:
-                fd.writelines([
-                    "// Include file for C compilers\n",
-                    "// Generated automatically by imgconv.py\n",
-                    "\n",
-                    "extern const unsigned char %s_PALETTE[%d];\n" % (targetu, len(self.palette)),
-                    "extern const unsigned char %s_IMG[%d];\n" % (targetu, len(data))
-                ])
-            strpalette = '{ %s }' % ', '.join('0x%02X' % x for x in self.palette)
-            with open(target + '.c', 'w') as fd:
-                fd.writelines([
-                    "// Implementation file for C compilers\n",
-                    "// Generated automatically by imgconv.py\n",
-                    "// mode %d, width %d, height %d\n" % (self.mode, self.imgw, self.imgh),
-                    "\n",
-                    "const unsigned char %s_PALETTE[%d] = %s;\n\n" % (targetu, len(self.palette), strpalette),
-                    "const unsigned char %s_IMG[%d] = {\n" % (targetu, len(data)),
-                ])
-                datalines = []
-                pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
-                row = min(16, int(self.imgw / pixbyte))
-                while len(data) > 0:
-                    line = data[0:row]
-                    end = ',\n' if len(data) > row else '\n'
-                    datalines.append('\t' + ', '.join('0x%02X' % x for x in line) + end)
-                    data = data[row:]
-                datalines.append('};\n')
-                fd.writelines(datalines)
-        except IOError as e:
-            raise ConversionError("couldn't create C files due to %s" % str(e))
         
-    def write_asm(self, target):
+    def code_c(self, sprite, name):
+        self._build_cpcimg(sprite)
         data = self._img2mode()
-        target = target.replace('.', '_')
-        targetl = target.lower()
-        try:
-            strpalette = ', '.join('0x%02X' % x for x in self.palette)
-            with open(target + '.asm', 'w') as fd:
-                fd.writelines([
-                    "; Image generated automatically by imgconv.py\n",
-                    "; mode %d, width %d, height %d\n" % (self.mode, self.imgw, self.imgh),
-                    "\n",
-                    "%s_pal:\n" % targetl,
-                    "\tdb " + strpalette + "\n\n",
-                    "%s_img:\n" % targetl,
-                ])
-                datalines = []
-                pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
-                row = min(16, int(self.imgw / pixbyte))
-                while len(data) > 0:
-                    line = data[0:row]
-                    datalines.append('\tdb ' + ', '.join('&%02X' % x for x in line) + '\n')
-                    data = data[row:]
-                datalines.append('\n')
-                fd.writelines(datalines)
-        except IOError as e:
-            raise ConversionError("couldn't create asm file due to %s" % str(e))
-
-    def write_scn(self, target):
-        """ 
-        Images copied to the video memory need to be interlaced:
-        25 first 25 cursor lines
-        25 second 25 cursor lines
-        ...
-        25 eigthth 25 cursor lines
-        """
-        requiredw = 160 if self.mode == 0 else 320 if self.mode == 1 else 640
-        if self.imgw != requiredw or self.imgh != 200:
-            raise ConversionError("input image must be %dx200 for mode %d" % (requiredw, self.mode))
+        code = []
+        strpalette = '{ %s }' % ', '.join('0x%02X' % x for x in self.palette)
+        code.append("// C format sprite created with Tixel\n")
+        code.append(f"// mode {self.mode}, width {self.imgw}, height {self.imgh}\n\n")
+        code.append(f"const unsigned char {name.upper()}_PAL[{len(self.palette)}] = {strpalette};\n\n")
+        code.append(f"const unsigned char {name.upper()}_IMG[{len(sprite)}] = {{\n")
+        pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
+        row = min(16, int(self.imgw / pixbyte))
+        while len(data) > 0:
+            line = data[0:row]
+            end = ',\n' if len(data) > row else '\n'
+            code.append('    ' + ', '.join('0x%02X' % x for x in line) + end)
+            data = data[row:]
+        code.append('};\n')
+        return code
         
+
+    def code_asm(self, sprite, name):
+        self._build_cpcimg(sprite)
         data = self._img2mode()
-        interlaced = bytearray()
-        # The video memory is divided in 8 blocks of 25 lines (200 lines total, 80 bytes per line):
-        #   first block has all cursors first line 
-        #   second block has all cursors second line
-        #   ... 
-        # Each block has 48 bytes of padding at the end so:
-        # Line Address (0-200) = 0xC000 + ((Line / 8) * 80) + ((Line % 8) * 2048)
-        padding = bytearray(0 for i in range(0,48))
-        for block in range(0, 8):
-            for line in range(0,25):
-                offset = 80 * block
-                start = (80 * 8 * line) + offset
-                interlaced.extend(
-                    data[start:start + 80]
-                )
-            interlaced.extend(padding)
-        self.write_bin(target, '.scn', interlaced)
-
-def run_read_inputimg(srcfile):
-    try:
-        img = Image.open(srcfile)
-        return img.convert('RGB')
-    except Exception as e:
-        print("[imgconv] error trying to read the input image", srcfile)
-        print(str(e))
-        sys.exit(1)
-
-def run_convert(args):
-    inputimg = run_read_inputimg(args.inimg)
-    converter = ImgConverter()
-    converter.build_cpcimg(inputimg, args.mode)
-    target = args.name if args.name != '' else os.path.splitext(args.inimg)[0]
-    if args.format == 'bin':
-        converter.write_bin(target)
-    elif args.format == 'c':
-        converter.write_c(target)
-    elif args.format == 'asm':
-        converter.write_asm(target)
-    elif args.format == 'scn':
-        converter.write_scn(target)
-    else:
-        raise ConversionError("unkown destination format, supported formats are: bin, c, asm, bas.")
-
-def process_args():
-    parser = argparse.ArgumentParser(
-        prog='imgconv.py',
-        description="""
-        Tool that converts regular image files (PNG, JPEG, etc.) to formats usable in
-        Amstrad CPC programs:
-            'bin': binary pure files without AMSDOS header.
-            'c'  : C/C++ source files for use with SDCC and the like.
-            'asm': Maxam/WinApe assembly compatible file.
-            'scn': interlaced image following the Amstrad video memory scheme.
-        """
-    )
-    parser.add_argument('inimg', help='Input image file.')
-    parser.add_argument('--name', type=str, default='', help='Name that has to be used to reference the image. If is not specified the input file name will be used.')
-    parser.add_argument('--format', type=str, default='bin', help='Format to be used for the output file (bin by default).')
-    parser.add_argument('--mode', type=int, default=0, help='Graphic mode (by default 0).')
-    args = parser.parse_args()
-    return args
-
-def main():
-    args = process_args()
-    try:
-        run_convert(args)
-    except ConversionError as e:
-        print("[imgconv] error: " + str(e))
-    sys.exit(0)
-
-if __name__ == "__main__":
-    main()
+        code = []
+        strpalette = ', '.join('0x%02X' % x for x in self.palette)
+        code.append("; Assembly format sprite created with Tixel\n")
+        code.append(f"; mode {self.mode}, width {self.imgw}, height {self.imgh}\n\n")
+        code.append(f"{name.lower()}_pal:\n")
+        code.append(f"\tdb {strpalette}\n\n")
+        code.append(f"{name.lower()}_img:\n")
+        pixbyte = 8 if self.mode == 2 else 4 if self.mode == 1 else 2
+        row = min(16, int(self.imgw / pixbyte))
+        while len(data) > 0:
+            line = data[0:row]
+            code.append('\tdb ' + ', '.join('&%02X' % x for x in line) + '\n')
+            data = data[row:]
+        code.append('\n')
+        return code
+        
+    def code_bas(self, sprite, name):
+        self._build_cpcimg(sprite)
+        code = []
+        code.append("' BASIC format sprite created with Tixel\n")
+        code.append(f"' mode {self.mode}, width {self.imgw}, height {self.imgh}\n\n")
+        return code

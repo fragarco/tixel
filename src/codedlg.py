@@ -12,3 +12,7 @@ class CodeDialog(tk.Toplevel):
         self.text = tk.Text(self.frame)
         self.text.grid(row=0, column=0, rowspan=10, columnspan=9)
         self.frame.pack(expand=True)
+
+    def set_code(self, code):
+        self.text.delete(1.0, tk.END)
+        self.text.insert(tk.END, code)
