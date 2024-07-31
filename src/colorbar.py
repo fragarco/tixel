@@ -8,7 +8,7 @@ class ColorBar(tk.LabelFrame):
         self.color_buttons = []
 
     def tohex(self, rgb):
-        return f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
+        return f'#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}'
     
     def create_bar(self, listener):
         self.color_buttons = []

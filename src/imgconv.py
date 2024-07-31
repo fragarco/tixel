@@ -193,16 +193,16 @@ class ImgConverter:
         totalbytes = int((self.imgh * self.imgw) / pixelxbyte)
         data = bytearray([0x00 for i in range(0, totalbytes)])
         for i in range(0, len(self.img)):
-            byte = int(i / pixelxbyte)
+            video_byte = int(i / pixelxbyte)
             if self.mode == 2:
                 pos = 7 - (i % pixelxbyte)
-                data[byte] = data[byte] | (self.img[i] << pos)
+                data[video_byte] = data[video_byte] | (self.img[i] << pos)
             elif self.mode == 1:
                 pos = 3 - (i % pixelxbyte)
-                data[byte] = data[byte] | (self.img[i] & 0x02) << (pos+4) | (self.img[i] & 0x01) << pos
+                data[video_byte] = data[video_byte] | (self.img[i] & 0x02) << (pos+3) | (self.img[i] & 0x01) << pos
             else:
                 pos = 1 - (i % pixelxbyte)
-                data[byte] = data[byte] | \
+                data[video_byte] = data[video_byte] | \
                              (self.img[i] & 0x01) << (6 + pos) | \
                              (self.img[i] & 0x02) << (1 + pos) | \
                              (self.img[i] & 0x04) << (2 + pos) | \

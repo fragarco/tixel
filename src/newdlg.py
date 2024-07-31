@@ -66,7 +66,7 @@ class NewDialog(tk.Toplevel):
     def onchange_bgcolor(self, event):
         colorid = self.bgcolors.current()
         rgb = CPC_RGB_COLORS[colorid]
-        self.color = f'#{rgb[0]:02x}{rgb[1]:02x}{rgb[2]:02x}'
+        self.color = f'#{rgb[0]:02X}{rgb[1]:02X}{rgb[2]:02X}'
         self.colorbtn.configure(background=self.color)
 
     def get_mode(self):
