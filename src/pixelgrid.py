@@ -16,14 +16,14 @@ class PixelGrid(tk.Frame):
         super().__init__(parent, bd=1, relief=tk.SUNKEN)
         self.width = width
         self.height = height
-        self.size = PIXEL_SIZE
+        self.pxsize = PIXEL_SIZE
         self.scrnmode = mode
         self.fill_color1 = bgcolor
         self.fill_color2 = bgcolor
         self.fill_bg = bgcolor
         self.behaviour = PixelGridMode.DRAWING
-        canvas_maxw = MAX_XPIXELS * self.size
-        canvas_maxh = MAX_YPIXELS * self.size
+        canvas_maxw = MAX_XPIXELS * self.pxsize
+        canvas_maxh = MAX_YPIXELS * self.pxsize
         self.undo_stack = []
         self.canvas = tk.Canvas(self, bd=0, highlightthickness=0, width=canvas_maxw, height=canvas_maxh)
         self.canvas.pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
@@ -33,12 +33,12 @@ class PixelGrid(tk.Frame):
         aspectx, aspecty = [(1, 0.5), (1, 1), (0.5, 1)][self.scrnmode]    
         for row in range(MAX_YPIXELS):
             for column in range(MAX_XPIXELS):
-                x0, y0 = (column * self.size * aspectx), (row * self.size * aspecty)
-                x1, y1 = (x0 + self.size * aspectx), (y0 + self.size * aspecty)
-                if row < self.width and column < self.height:
+                x0, y0 = (column * self.pxsize * aspectx), (row * self.pxsize * aspecty)
+                x1, y1 = (x0 + self.pxsize * aspectx), (y0 + self.pxsize * aspecty)
+                if column < self.width and row < self.height:
                     self.canvas.create_rectangle(x0, y0, x1, y1,
                                                 fill=self.fill_bg, outline="gray",
-                                                tags=(self._tag(row, column), "cell"))
+                                                tags=(self._tag(column, row), "cell"))
                 else:
                     self.canvas.create_rectangle(x0, y0, x1, y1, fill='#CCCCCC', tags=("out"))
                     
@@ -50,9 +50,9 @@ class PixelGrid(tk.Frame):
         self.canvas.tag_bind("cell", "<B3-Motion>", lambda e: self._paint(e, self.fill_color2))
         self.canvas.tag_bind("cell", "<Button-3>",  lambda e: self._paint(e, self.fill_color2))
     
-    def _tag(self, row, column):
+    def _tag(self, x, y):
         # Return the tag for a given row and column
-        tag = f"{row},{column}"
+        tag = f"{x},{y}"
         return tag
 
     def _paint(self, event, color):
@@ -81,17 +81,17 @@ class PixelGrid(tk.Frame):
 
     def get_pixels(self):
         pixels = []
-        for row in range(self.height):
-            for col in range(self.width):
-                color = self.canvas.itemcget(self._tag(row, col), "fill")
-                pixels.append(((row, col), color))
+        for y in range(self.height):
+            for x in range(self.width):
+                color = self.canvas.itemcget(self._tag(x, y), "fill")
+                pixels.append(((x, y), color))
         return pixels            
 
     def set_pixels(self, pixels):
         for pixel in pixels:
-            row, col = pixel[0]
+            x, y = pixel[0]
             color = pixel[1]
-            tag = self._tag(row, col)
+            tag = self._tag(x, y)
             self.canvas.itemconfigure(tag, fill=color)
 
     def set_color(self, button, hexcol):
@@ -118,18 +118,18 @@ class PixelGrid(tk.Frame):
         self.undo_append()
         pixels = self.get_pixels()
         mirror = []
-        maxcol = self.height - 1
+        max_x = self.width - 1
         for i in range(0, len(pixels)):
-            mirror.append(((pixels[i][0][0], maxcol - pixels[i][0][1]), pixels[i][1]))
+            mirror.append(((max_x - pixels[i][0][0], pixels[i][0][1]), pixels[i][1]))
         self.set_pixels(mirror)
 
     def mirrorhor(self):
         self.undo_append()
         pixels = self.get_pixels()
         mirror = []
-        maxrow = self.width - 1
+        max_y = self.height - 1
         for i in range(0, len(pixels)):
-            mirror.append(((maxrow - pixels[i][0][0], pixels[i][0][1]), pixels[i][1]))
+            mirror.append(((pixels[i][0][0], max_y - pixels[i][0][1]), pixels[i][1]))
         self.set_pixels(mirror)
 
     def replace_color(self, cell, color):
@@ -144,26 +144,27 @@ class PixelGrid(tk.Frame):
         self.set_pixels(replaced)
 
     def fill_color(self, cells, oldcolor, newcolor):
-        while len(cells) > 0:
-            cpos = cells[0]
-            cells = cells[1:]
-            self.canvas.itemconfigure(self._tag(cpos[0], cpos[1]), fill=newcolor)
-            neighbours = [
-                (cpos[0]-1, cpos[1]-1),
-                (cpos[0]  , cpos[1]-1),
-                (cpos[0]+1, cpos[1]-1),
-                (cpos[0]-1, cpos[1]),
-                (cpos[0]+1, cpos[1]),
-                (cpos[0]+1, cpos[1]+1),
-                (cpos[0]  , cpos[1]+1),
-                (cpos[0]-1, cpos[1]+1)
-            ]
-            for pos in neighbours:
-                if pos[0] > -1 and pos[0] < self.width and pos[1] > -1 and pos[1] < self.height:
-                    tag = self._tag(pos[0], pos[1])
-                    color = self.canvas.itemcget(tag, "fill")
-                    if color == oldcolor and pos not in cells:
-                        cells.append(pos)                
+        if oldcolor != newcolor:
+            while len(cells) > 0:
+                cx, cy = cells[0]
+                cells = cells[1:]
+                self.canvas.itemconfigure(self._tag(cx, cy), fill=newcolor)
+                neighbours = [
+                    (cx-1, cy-1),
+                    (cx  , cy-1),
+                    (cx+1, cy-1),
+                    (cx-1, cy),
+                    (cx+1, cy),
+                    (cx-1, cy+1),
+                    (cx  , cy+1),
+                    (cx+1, cy+1)
+                ]
+                for x,y in neighbours:
+                    if x > -1 and x < self.width and y > -1 and y < self.height:
+                        tag = self._tag(x, y)
+                        color = self.canvas.itemcget(tag, "fill")
+                        if color == oldcolor and (x,y) not in cells:
+                            cells.append((x,y))                
 
     def undo_reset(self):
         self.undo_stack = []

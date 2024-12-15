@@ -282,8 +282,42 @@ class ImgConverter:
         return code
         
     def code_bas(self, sprite, name):
+        if name == "": name = "unnamed"
         self._build_cpcimg(sprite)
         code = []
-        code.append("' BASIC format sprite created with Tixel\n")
-        code.append(f"' mode {self.mode}, width {self.imgw}, height {self.imgh}\n\n")
+        strpalette = ': '.join('INK %d,%d' % (i,CPC_HW_COLORS[x]) for i,x in enumerate(self.palette))
+        code.append("10 ' BASIC formated sprite created with Tixel\n")
+        code.append(f"20 ' {name}: mode {self.mode}, width {self.imgw}, height {self.imgh}\n")
+        code.append("30 ' Palette:\n")
+        code.append(f"40 ' {strpalette} \n")
+        code.append("50 ' \n")
+        xcursors = int(self.imgw / 8)
+        ycursors = int(self.imgh / 8)
+        symbols = 256 - (len(self.palette) * xcursors * ycursors)
+        code.append(f"60 SYMBOL AFTER {symbols}\n")
+        # I know, I know... the next code is not very elegant
+        line = 70
+        for cindex in range(0,len(self.palette)):
+            code.append(f"{line} ' Symbol definitions for INK {cindex}\n")
+            line = line + 10
+            for y in range(0, ycursors):
+                for x in range(0, xcursors):
+                    symbol = []
+                    for cline in range(0, 8):  # a cursor has 8 lines
+                        imgpos = (x * 8) + (self.imgw * (y * 8 + cline))
+                        symval = 0
+                        symval = symval + (128 if self.img[imgpos] == cindex else 0)
+                        symval = symval + (64 if self.img[imgpos+1] == cindex else 0)
+                        symval = symval + (32 if self.img[imgpos+2] == cindex else 0)
+                        symval = symval + (16 if self.img[imgpos+3] == cindex else 0)
+                        symval = symval + (8 if self.img[imgpos+4] == cindex else 0)
+                        symval = symval + (4 if self.img[imgpos+5] == cindex else 0)
+                        symval = symval + (2 if self.img[imgpos+6] == cindex else 0)
+                        symval = symval + (1 if self.img[imgpos+7] == cindex else 0)
+                        symbol.append(symval)
+                    code.append(f"{line} SYMBOL {symbols}")
+                    line = line + 10
+                    for v in symbol: code.append(f",{v}")
+                    code.append("\n")
+                    symbols = symbols + 1
         return code

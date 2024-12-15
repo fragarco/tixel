@@ -15,6 +15,7 @@ class TixelApp:
     def __init__(self, root):
         self.width = 16
         self.height = 16
+        self.resolution = 4  # resolution index as per NewDialog
         self.scrnmode = 1
         self.current_prj = ""
         self.bgcolor = "#FFFFFF"
@@ -25,11 +26,11 @@ class TixelApp:
         self.setup_tools()
 
     def project_new(self):
-        newwin = NewDialog(self.scrnmode, self.bgcolor)
+        newwin = NewDialog(self.scrnmode, self.resolution, self.bgcolor)
         self.root.eval(f'tk::PlaceWindow {str(newwin)} center')
         self.root.wait_window(newwin)
         self.scrnmode = newwin.get_mode()
-        self.width, self.height = newwin.get_size()
+        (self.width, self.height), self.resolution = newwin.get_size()
         self.bgcolor = newwin.get_bgcolor()
         self.newproject()
 

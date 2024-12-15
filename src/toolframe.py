@@ -46,9 +46,9 @@ class ToolFrame(tk.LabelFrame):
         tool.grid(row=3, column=0, sticky='w')
         self.tools.append(tool)
 
-        self.colorbtn1 = self._create_colorview('Draw btn1', 4, 0, self.color1)
-        self.colorbtn2 = self._create_colorview('Draw btn2', 5, 0, self.color2)
-        self.bgcolorbtn = self._create_colorview('Erase', 6, 0, self.bgcolor)
+        self.colorbtn1 = self._create_colorview('Button1 Color', 4, 0, self.color1)
+        self.colorbtn2 = self._create_colorview('Button2 Color', 5, 0, self.color2)
+        self.bgcolorbtn = self._create_colorview('Erase Color', 6, 0, self.bgcolor)
 
     def draw_color(self, button, color):
         if button == 0:
