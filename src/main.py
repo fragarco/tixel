@@ -179,7 +179,8 @@ class TixelApp:
         self.colorbar.grid(row=1, column=0, columnspan=8, sticky='w', pady=5, padx=5)
 
     def setup_canvas(self):
-        self.canvas = PixelGrid(self.root, self.scrnmode, self.width, self.height, self.bgcolor)
+        pxsize = min(30, self.root.winfo_screenheight()/35)
+        self.canvas = PixelGrid(self.root, self.scrnmode, self.width, self.height, self.bgcolor, pxsize)
         self.canvas.grid(row=0, column=2, columnspan=5)
 
     def updatetitle(self):

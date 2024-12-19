@@ -12,11 +12,11 @@ class PixelGridMode(enum.Enum):
     FILLING     = 3
 
 class PixelGrid(tk.Frame):
-    def __init__(self, parent, mode, width, height, bgcolor):
+    def __init__(self, parent, mode, width, height, bgcolor, pxsize = 30):
         super().__init__(parent, bd=1, relief=tk.SUNKEN)
         self.width = width
         self.height = height
-        self.pxsize = PIXEL_SIZE
+        self.pxsize = pxsize
         self.scrnmode = mode
         self.fill_color1 = bgcolor
         self.fill_color2 = bgcolor
