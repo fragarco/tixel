@@ -11,6 +11,8 @@ from imgconv import ImgConverter
 from pathlib import Path
 import json
 
+TIXEL_VERSION = "1.0.0"
+
 class TixelApp:
     def __init__(self, root):
         self.width = 16
@@ -139,7 +141,11 @@ class TixelApp:
         self.code_view(code)
 
     def menu_help_action(self, action):
-        print("TODO help action:", action)
+        if action == MenuActions.HELP_ABOUT:
+            info = f"<h1>Tixel<h1> v{TIXEL_VERSION} by Javier Garcia\n\n"
+            info = info + "A simple pixel art tool for the Amstrad CPC\n"
+            info = info + "https://github.com/fragarco/tixel\n"
+            messagebox.showinfo("About", info)
 
     def tool_changed_action(self, newtool):
         if newtool == Tools.DRAW:
