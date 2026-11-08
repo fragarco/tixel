@@ -102,7 +102,7 @@ Cada transformación afecta solo al sprite actual y se puede deshacer con Ctrl+Z
 #### Code
 
 - **BASIC**: genera BASIC puro.
-- **BASIC (ABASC)**: genera BASIC compatible con el compilador ABASC y sus librerías cpctelera y cpcrslib.
+- **BASIC (ABASC)**: genera BASIC compatible con el compilador ABASC y su librería BASE.
 - **C**: código en C, por ejemplo, utilizable con la librería cpctelera y el compilador SDCC.
 - **ASM**: código en ensamblador con sintáxis MAXAM (utilizable con ABASM o WinApe).
 
@@ -207,7 +207,7 @@ Las transformaciones se pueden deshacer y no afectan a los demás sprites del pr
 El menú **Code** genera el código de la paleta y de cada sprite del proyecto, teniendo en cuenta el modo de vídeo y la disposición de la memoria de vídeo del Amstrad CPC. Los formatos disponibles son:
 
 - **BASIC**: paleta con instrucciones `INK`, definiciones `SYMBOL` y un ejemplo de impresión del sprite.
-- **BASIC (ABASC)**: paleta y datos de imagen para el compilador ABASC usando el comando `ASM`.
+- **BASIC (ABASC)**: paleta y datos de imagen para el compilador ABASC. Añade código de ejemplo para pintar el primer sprite.
 - **C**: arrays `const unsigned char` para la paleta y para cada sprite.
 - **ASM**: etiquetas y directivas `db` para la paleta y para cada sprite.
 
