@@ -38,7 +38,7 @@ class TestBuildVideoImg(unittest.TestCase):
         """
         conv = CodeConverter(project(2, 8, 1, [0, 1]))
         sprite = Sprite(8, 1, [[1, 0, 1, 0, 1, 0, 1, 0]])
-        data = list(conv._build_videoimg(sprite.pixels))
+        data = list(conv._encode_img(sprite.pixels))
         self.assertEqual(data, [0xAA])
 
     def test_mode1_two_bits_per_pixel(self) -> None:
@@ -47,8 +47,8 @@ class TestBuildVideoImg(unittest.TestCase):
         """
         conv = CodeConverter(project(1, 4, 1, [0, 1, 2, 3]))
         sprite = Sprite(4, 1, [[3, 2, 1, 0]])
-        data = list(conv._build_videoimg(sprite.pixels))
-        self.assertEqual(data, [0xCA])
+        data = list(conv._encode_img(sprite.pixels))
+        self.assertEqual(data, [0xAC])
 
     def test_mode0_four_bits_per_pixel(self) -> None:
         """
@@ -58,9 +58,9 @@ class TestBuildVideoImg(unittest.TestCase):
         sprite_left = Sprite(2, 1, [[1, 0]])
         sprite_right = Sprite(2, 1, [[0, 1]])
         sprite_both = Sprite(2, 1, [[1, 1]])
-        self.assertEqual(list(conv._build_videoimg(sprite_left.pixels)),  [0x80])
-        self.assertEqual(list(conv._build_videoimg(sprite_right.pixels)), [0x40])
-        self.assertEqual(list(conv._build_videoimg(sprite_both.pixels)),  [0xC0])
+        self.assertEqual(list(conv._encode_img(sprite_left.pixels)),  [0x80])
+        self.assertEqual(list(conv._encode_img(sprite_right.pixels)), [0x40])
+        self.assertEqual(list(conv._encode_img(sprite_both.pixels)),  [0xC0])
 
 
 class TestCEmission(unittest.TestCase):
@@ -94,13 +94,13 @@ class TestAsmEmission(unittest.TestCase):
         self.assertIn("sp_hero:", code)
         self.assertIn("    db &AA\n", code)
 
-    def test_abasc_image_wraps_db_in_asm(self) -> None:
+    def test_abasc_image_data(self) -> None:
         conv = CodeConverter(project(2, 8, 1, [0, 1]))
         sprite = Sprite(8, 1, [[1, 0, 1, 0, 1, 0, 1, 0]])
         code = "".join(conv.code_abasc_img(sprite, "Hero"))
         self.assertIn("LABEL SP.HERO:", code)
-        self.assertIn('    ASM("db &AA")\n', code)
-
+        self.assertIn("DATA &0101", code)
+        self.assertIn("DATA &00AA", code)
 
 class TestBasEmission(unittest.TestCase):
     def test_basic_palette_ink_commands(self) -> None:
@@ -112,7 +112,6 @@ class TestBasEmission(unittest.TestCase):
     def test_abasc_palette_label(self) -> None:
         conv = CodeConverter(project(2, 8, 8, [1, 24]))
         code = "".join(conv.code_abasc_pal("hero"))
-        self.assertIn("LABEL PAL.HERO:", code)
         self.assertIn("INK 0,1", code)
 
     def test_basic_symbol_encoding_golden(self) -> None:

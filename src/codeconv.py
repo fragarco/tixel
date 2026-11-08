@@ -7,15 +7,15 @@ different languages.
 The CPC video memory arrangement is a little bit 'special'.
 As reference:
 
-Mode 2, 640x200, 2 colors
+Mode 2, 640x200, 2 colors (8 pixels x byte)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0	pixel 1	pixel 2	pixel 3	pixel 4	pixel 5	pixel 6	pixel 7
 
-Mode 1, 320x200, 4 colors (2 bits x pixel: bit 1 then bit 0)
+Mode 1, 320x200, 4 colors (4 pixels x byte: bit 1 then bit 0)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0 pixel 1 pixel 2 pixel 3 pixel 0 pixel 1	pixel 2 pixel 3
 
-Modo 0, 160x200, colors (4 bits x pixel: bit 0 bit 2 bit 1 bit 3)
+Modo 0, 160x200, colors (2 pixels x byte: bit 0 bit 2 bit 1 bit 3)
 bit 7	bit 6	bit 5	bit 4	bit 3	bit 2	bit 1	bit 0
 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1 pixel 0 pixel 1
 
@@ -78,30 +78,37 @@ class CodeConverter:
                 img.extend(colorindex.to_bytes(1, 'little'))
         return img
 
-    def _build_videoimg(self, pixels: list[list[int]]) -> bytearray:
+    def _encode_img(self, srcimg: list[list[int]]) -> bytearray:
         """
         Encodes color indexes depending on the screen mode video arrangement.
         """
-        img = self._flatten_pixels(pixels)
+        img = self._flatten_pixels(srcimg)
         pixelxbyte = self._pixels_per_byte()
         totalbytes = int((self.imgh * self.imgw) / pixelxbyte)
-        data = bytearray([0x00 for i in range(0, totalbytes)])
-        for i in range(0, len(img)):
-            video_byte = int(i / pixelxbyte)
+        imgdata = bytearray([0x00 for i in range(0, totalbytes)])
+        # the total number of pixels to convert must be even.
+        pixels = len(img)
+        if pixels % 2 == 1: pixels = pixels - 1
+        for i in range(0, pixels):
+            # Let's go orginal image pixel by pixel
+            # and calculate in imgbyte which CPC image byte to set
+            imgbyte = i // pixelxbyte
             if self.mode == 2:
                 pos = 7 - (i % pixelxbyte)
-                data[video_byte] = data[video_byte] | (img[i] << pos)
+                imgdata[imgbyte] = imgdata[imgbyte] | (img[i] << pos)
             elif self.mode == 1:
                 pos = 3 - (i % pixelxbyte)
-                data[video_byte] = data[video_byte] | (img[i] & 0x02) << (pos+3) | (img[i] & 0x01) << pos
+                bit0 = img[i] & 0x01
+                bit1 = (img[i] & 0x02) >> 1
+                imgdata[imgbyte] = imgdata[imgbyte] | bit0 << (pos+4) | bit1 << pos
             else:
                 pos = 1 - (i % pixelxbyte)
-                data[video_byte] = data[video_byte] | \
-                             (img[i] & 0x01) << (6 + pos) | \
-                             (img[i] & 0x02) << (1 + pos) | \
-                             (img[i] & 0x04) << (2 + pos) | \
-                             (img[i] & 0x08) >> (3 - pos)
-        return data
+                imgdata[imgbyte] = imgdata[imgbyte] | \
+                                (img[i] & 0x01) << (6 + pos) | \
+                                (img[i] & 0x02) << (1 + pos) | \
+                                (img[i] & 0x04) << (2 + pos) | \
+                                (img[i] & 0x08) >> (3 - pos)
+        return imgdata
 
     def code_c_pal(self, name: str) -> list[str]:
         code: list[str] = []
@@ -111,7 +118,7 @@ class CodeConverter:
         return code
 
     def code_c_img(self, sprite: Sprite, name: str) -> list[str]:
-        data = self._build_videoimg(sprite.pixels)
+        data = self._encode_img(sprite.pixels)
         code: list[str] = []
         code.append(f"// mode {self.mode}, {self.imgw}x{self.imgh} pixels\n")
         code.append(f"const unsigned char SP_{name.upper()}[{len(data)}] = {{\n")
@@ -131,7 +138,7 @@ class CodeConverter:
         return code
 
     def code_asm_img(self, sprite: Sprite, name: str) -> list[str]:
-        data = self._build_videoimg(sprite.pixels)
+        data = self._encode_img(sprite.pixels)
         code: list[str] = []
         code.append(f"; mode {self.mode}, {self.imgw}x{self.imgh} pixels\n")
         code.append(f"sp_{name.lower()}:\n")
@@ -141,21 +148,27 @@ class CodeConverter:
         return code
 
     def code_abasc_pal(self, name: str) -> list[str]:
-        code: list[str] = []
-        strpalette = ', '.join('0x%02X' % x for x in self.hwpal)
+        code: list[str] = ['CHAIN MERGE "base/base.bas"\n\n']
         code.append(f"' Palette of {len(self.hwpal)} colors\n")
-        code.append(f"' " + ': '.join('INK %d,%d' % (i,x) for i,x in enumerate(self.fwpal)) + '\n')
-        code.append(f"LABEL PAL.{name.upper()}:\n")
-        code.append('    ' + f'ASM("db {strpalette}")\n\n')
+        code.append(': '.join('INK %d,%d' % (i,x) for i,x in enumerate(self.fwpal)) + '\n\n')
         return code
 
     def code_abasc_img(self, sprite: Sprite, name: str) -> list[str]:
-        data = self._build_videoimg(sprite.pixels)
-        code: list[str] = []
-        code.append(f"' mode {self.mode}, {self.imgw}x{self.imgh} pixels\n")
+        data = self._encode_img(sprite.pixels)
+        code: list[str] = ["' Drawing example code\n"]
+        code.append(f"MODE {self.mode}\n")
+        code.append(f"RESTORE SP.{name.upper()}: CALL ScrDrawSprite(10, 100)\n")
+        code.append("END\n\n")
         code.append(f"LABEL SP.{name.upper()}:\n")
+        nbytes = self._bytes_per_line()
+        code.append(f"DATA &{self.imgh:02X}{nbytes:02X} ' mode {self.mode}, {nbytes} bytes x {self.imgh} lines\n")
         for line in self._chunk_lines(data):
-            code.append('    ASM("db ' + ', '.join('&%02X' % x for x in line) + '")\n')
+            values: list[str] = []
+            for i in range(0, len(line), 2):
+                lsb = line[i]
+                msb = line[i+1] if i+1<len(line) else 0x00
+                values.append(f"&{msb:02X}{lsb:02X}")
+            code.append('DATA ' + ', '.join(values) + '\n')
         code.append('\n')
         return code
 
