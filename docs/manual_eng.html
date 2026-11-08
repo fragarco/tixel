@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc 3.10.2" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Tixel</title>
+  <style>
+    /* Default styles provided by pandoc.
+    ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+    */
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 50em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    svg {
+      height: auto;
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      white-space: pre-wrap;
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #1a1a1a;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: 1.5em;}
+    div.column{flex: auto;}
+    @media screen {
+    div.columns{gap: min(4vw, 1.5em);}
+    div.column{overflow-x: auto;}
+    }
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    html { -webkit-text-size-adjust: 100%; }
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">Tixel</h1>
+</header>
+<h1 id="tixel---user-manual">Tixel - User Manual</h1>
+<h2 id="introduction">Introduction</h2>
+<p><strong>Tixel</strong> is a desktop sprite editor for creating
+graphics for <strong>Amstrad CPC</strong> games. It is written in pure
+Python with Tkinter and requires no other external libraries.</p>
+<p>A Tixel project can contain a single sprite or a sequence of sprites.
+Once the design is finished, Tixel can generate the code needed to use
+the sprites from <strong>C</strong> (for example with cpctelera),
+<strong>assembly</strong>, pure <strong>BASIC</strong>, and
+<strong>BASIC</strong> for the ABASC compiler.</p>
+<hr />
+<h2 id="requirements">Requirements</h2>
+<p>To run Tixel you need:</p>
+<ol type="1">
+<li><strong>Python 3.10 or later</strong>.</li>
+<li>Support for <code>tkinter</code>, the graphical interface library
+included in standard Python installations on Windows and macOS. On
+Linux, you usually need to install the <code>python3-tk</code>
+package.</li>
+</ol>
+<hr />
+<h2 id="installation-and-execution">Installation and execution</h2>
+<ol type="1">
+<li><p>Download or clone the Tixel repository.</p></li>
+<li><p>Check that Python is installed correctly:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> <span class="at">--version</span></span></code></pre></div></li>
+<li><p>Run the application from the repository root:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">python</span> src/tixel.py</span></code></pre></div></li>
+</ol>
+<h2 id="creating-an-executable-optional">Creating an executable
+(optional)</h2>
+<p>Tixel does not include its own build system. If you want to use the
+application as an executable, you can use
+<strong>PyInstaller</strong>:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">pip</span> install pyinstaller</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">pyinstaller</span> <span class="at">-F</span> <span class="at">-w</span> src/tixel.py <span class="at">-n</span> Tixel</span></code></pre></div>
+<p>The executable will be generated inside the <code>dist</code> folder
+(for example, <code>dist/Tixel.exe</code> on Windows).</p>
+<hr />
+<h2 id="user-interface">User interface</h2>
+<p>The main window consists of these areas:</p>
+<ul>
+<li><strong>Menu bar</strong>: File, Edit, Tools, Transform, View, Code
+and Help.</li>
+<li><strong>Toolbar</strong>: shows information about the video mode,
+resolution, number of colors and the selected drawing tool.</li>
+<li><strong>Editing canvas</strong>: the grid where the current sprite
+is displayed.</li>
+<li><strong>Left panel</strong>: sprite list, management buttons,
+preview and animation control.</li>
+<li><strong>Palette</strong>: bottom strip with the colors selected for
+the project.</li>
+<li><strong>Status bar</strong>: information about the pixel under the
+cursor, application messages and the name of the tool when hovering over
+the icons.</li>
+</ul>
+<p>The window title shows the project name and an asterisk
+(<code>*</code>) when there are unsaved changes.</p>
+<h3 id="menu-bar">Menu bar</h3>
+<h4 id="file">File</h4>
+<ul>
+<li><strong>New Project…</strong> (<code>Ctrl+N</code>): creates a new
+project. The dialog lets you choose the video mode and resolution. These
+parameters cannot be changed once the project is created.</li>
+<li><strong>Open Project…</strong> (<code>Ctrl+O</code>): loads a
+<code>.tixel</code> file.</li>
+<li><strong>Save</strong> (<code>Ctrl+S</code>): saves the current
+project.</li>
+<li><strong>Save As…</strong>: saves the project under another name or
+in another location.</li>
+<li><strong>Exit</strong>: closes the application.</li>
+</ul>
+<p>If there are unsaved changes, when creating or opening another
+project (and when exiting) Tixel asks whether you want to save, discard
+the changes or cancel the operation.</p>
+<h4 id="edit">Edit</h4>
+<ul>
+<li><strong>Undo</strong> (<code>Ctrl+Z</code>) and
+<strong>Redo</strong> (<code>Ctrl+Y</code>): undo and redo.</li>
+<li><strong>Copy Sprite</strong> (<code>Ctrl+C</code>) and <strong>Paste
+Sprite</strong> (<code>Ctrl+V</code>): copy and paste the current
+sprite. Pasting is only possible if the copied sprite has the same
+dimensions as the target.</li>
+<li><strong>Add Sprite</strong>: inserts an empty sprite after the
+current one.</li>
+<li><strong>Delete Sprite</strong>: deletes the current sprite (at least
+one must always remain) after asking for confirmation.</li>
+<li><strong>Clear Sprite</strong>: clears all the content of the current
+sprite.</li>
+</ul>
+<p>Sprites can be reordered with the <strong>Up</strong> and
+<strong>Down</strong> buttons in the left panel, or duplicated with
+<strong>Duplicate</strong>.</p>
+<h4 id="tools">Tools</h4>
+<ul>
+<li><strong>Pencil</strong>: pixel-by-pixel drawing tool (default).</li>
+<li><strong>Fill</strong>: area fill tool.</li>
+</ul>
+<p>The same tools are available as icon buttons in the toolbar. The
+selected tool appears highlighted.</p>
+<h4 id="transform">Transform</h4>
+<ul>
+<li><strong>Flip Horizontally</strong>: mirrors the current sprite from
+left to right.</li>
+<li><strong>Flip Vertically</strong>: mirrors the current sprite from
+top to bottom.</li>
+</ul>
+<p>Each transformation affects only the current sprite and can be undone
+with Ctrl+Z (Undo).</p>
+<h4 id="view">View</h4>
+<ul>
+<li><strong>Grid</strong> (<code>Ctrl+G</code>): shows or hides the
+canvas grid.</li>
+</ul>
+<h4 id="code">Code</h4>
+<ul>
+<li><strong>BASIC</strong>: generates pure BASIC.</li>
+<li><strong>BASIC (ABASC)</strong>: generates BASIC compatible with the
+ABASC compiler and its cpctelera and cpcrslib libraries.</li>
+<li><strong>C</strong>: C code, for example usable with the cpctelera
+library and the SDCC compiler.</li>
+<li><strong>ASM</strong>: assembly code with MAXAM syntax (usable with
+ABASM or WinApe).</li>
+</ul>
+<p>The result is shown in a text window from which it can be copied.</p>
+<h4 id="help">Help</h4>
+<ul>
+<li><strong>Quick Help</strong>: quick summary of how the application
+works.</li>
+<li><strong>About Tixel</strong>: information about the version and
+purpose of Tixel.</li>
+</ul>
+<h3 id="sprite-editing-area">Sprite editing area</h3>
+<p>The main window shows the current sprite with an optional grid. The
+maximum resolution is <strong>48x48 pixels</strong> and is chosen when
+creating the project; it cannot be changed afterwards. The cell size is
+adjusted automatically so that the sprite fits in the window.</p>
+<p>To draw:</p>
+<ul>
+<li><strong>Left button</strong>: applies the active tool with the
+selected palette color.</li>
+<li><strong>Right button</strong>: applies the active tool with color
+<strong>0</strong>.</li>
+</ul>
+<p>While the animation is playing, the canvas does not accept
+changes.</p>
+<h3 id="sprite-list-and-preview">Sprite list and preview</h3>
+<p>The left panel contains the list of sprites that make up the
+animation:</p>
+<ul>
+<li><strong>Add</strong>: adds an empty sprite after the current
+one.</li>
+<li><strong>Duplicate</strong>: duplicates the current sprite and adds
+it immediately after it.</li>
+<li><strong>Delete</strong>: deletes the current sprite (there must
+always be at least one).</li>
+<li><strong>Up / Down</strong>: change the order of the sprite in the
+list.</li>
+</ul>
+<p>All sprites in the project share the same resolution and the same
+palette. The preview shows the current sprite or, during animation, the
+corresponding frame. The <strong>Play/Stop</strong> button starts or
+stops the animation; at least two sprites are required to play it.</p>
+<h3 id="color-palette">Color palette</h3>
+<p>The project palette is shown at the bottom with a number for each
+color. Click an entry to select it. The selected color is used with the
+left mouse button.</p>
+<ul>
+<li><strong>Add Color…</strong>: adds a color from the 27-color Amstrad
+CPC palette. The button is disabled when the maximum for the video mode
+is reached.</li>
+<li><strong>Change Color…</strong>: changes the current color for
+another one. You can also double-click the palette entry. All pixels
+that use that index change to the new color.</li>
+<li><strong>Remove Color</strong>: removes the selected color after
+confirmation. Pixels that used it change to color 0 and the higher
+indexes shift down by one position. The palette must keep at least one
+color.</li>
+</ul>
+<p>The maximum number of colors depends on the video mode and Tixel
+enforces it while editing:</p>
+<table>
+<thead>
+<tr>
+<th>Mode</th>
+<th>Maximum colors</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Mode 0</td>
+<td>16</td>
+</tr>
+<tr>
+<td>Mode 1</td>
+<td>4</td>
+</tr>
+<tr>
+<td>Mode 2</td>
+<td>2</td>
+</tr>
+</tbody>
+</table>
+<p>The initial palette contains two colors. The color at index 0 acts as
+the background color. Only colors from the official Amstrad CPC palette
+can be selected.</p>
+<h3 id="status-bar">Status bar</h3>
+<p>It shows contextual information:</p>
+<ul>
+<li>Pixel coordinates, palette index and color name when moving the
+mouse over the canvas.</li>
+<li>The name of the tool when hovering over the toolbar icons.</li>
+<li>Messages such as the project loaded or saved, or if there is nothing
+to undo or redo.</li>
+</ul>
+<hr />
+<h2 id="transformations">Transformations</h2>
+<p>The <strong>Transform</strong> menu mirrors the current sprite:</p>
+<ul>
+<li><strong>Flip Horizontally</strong>: swaps the columns from left to
+right.</li>
+<li><strong>Flip Vertically</strong>: swaps the rows from top to
+bottom.</li>
+</ul>
+<p>Transformations can be undone and do not affect the other sprites in
+the project.</p>
+<hr />
+<h2 id="creating-a-sprite-step-by-step">Creating a sprite step by
+step</h2>
+<ol type="1">
+<li><strong>Create the project</strong>:
+<ul>
+<li><code>File &gt; New Project...</code>.</li>
+<li>Choose the video mode (0, 1 or 2) and the resolution (from 1x1 to
+48x48).</li>
+<li>Click <strong>Create</strong>. The mode and resolution can no longer
+be changed.</li>
+</ul></li>
+<li><strong>Prepare the palette</strong>:
+<ul>
+<li>The palette starts with two colors; add more with <strong>Add
+Color…</strong> up to the maximum allowed by the mode.</li>
+<li>Select the color you want to draw with.</li>
+</ul></li>
+<li><strong>Draw</strong>:
+<ul>
+<li>Choose <strong>Pencil</strong> or <strong>Fill</strong> from the
+Tools menu or the toolbar.</li>
+<li>Use the left button with the selected color and the right button to
+paint with color 0.</li>
+<li>Use <code>Ctrl+Z</code>/<code>Ctrl+Y</code> to correct
+mistakes.</li>
+</ul></li>
+<li><strong>Create the animation</strong> (optional):
+<ul>
+<li>Add or duplicate sprites with the buttons in the right panel.</li>
+<li>Reorder them with <strong>Up/Down</strong> and press
+<strong>Play</strong> to view the animation.</li>
+</ul></li>
+<li><strong>Save the project</strong>:
+<ul>
+<li><code>File &gt; Save</code> or <code>File &gt; Save As...</code>.
+The file will have the <code>.tixel</code> extension.</li>
+</ul></li>
+<li><strong>Export the code</strong>:
+<ul>
+<li>Open the <strong>Code</strong> menu and choose BASIC, BASIC (ABASC),
+C or ASM.</li>
+</ul></li>
+</ol>
+<hr />
+<h2 id="code-export">Code export</h2>
+<p>The <strong>Code</strong> menu generates the code for the palette and
+for each sprite in the project, taking into account the video mode and
+the Amstrad CPC video memory layout. The available formats are:</p>
+<ul>
+<li><strong>BASIC</strong>: palette with <code>INK</code> instructions,
+<code>SYMBOL</code> definitions and a sprite printing example.</li>
+<li><strong>BASIC (ABASC)</strong>: palette and image data for the ABASC
+compiler using the <code>ASM</code> command.</li>
+<li><strong>C</strong>: <code>const unsigned char</code> arrays for the
+palette and for each sprite.</li>
+<li><strong>ASM</strong>: labels and <code>db</code> directives for the
+palette and for each sprite.</li>
+</ul>
+<p>Example of the generated C code:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode c"><code class="sourceCode c"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Palette of 2 colors</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">unsigned</span> <span class="dt">char</span> PAL_MISPRITE<span class="op">[</span><span class="dv">2</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span> <span class="bn">0x04</span><span class="op">,</span> <span class="bn">0x03</span> <span class="op">};</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co">// mode 0, 8x4 pixels</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="dt">const</span> <span class="dt">unsigned</span> <span class="dt">char</span> SP_MISPRITE00<span class="op">[</span><span class="dv">16</span><span class="op">]</span> <span class="op">=</span> <span class="op">{</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span><span class="op">,</span> <span class="bn">0x00</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="op">};</span></span></code></pre></div>
+<p>Example of the generated assembly code:</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode asm"><code class="sourceCode fasm"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">; Palette of 2 colors</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pal_misprite:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="dt">db</span> <span class="bn">0x04</span><span class="op">,</span> <span class="bn">0x03</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co">; mode 0, 8x4 pixels</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">sp_misprite00:</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="dt">db</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="dt">db</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span><span class="op">,</span> <span class="op">&amp;</span><span class="dv">00</span></span></code></pre></div>
+<p>The names and number of bytes depend on the project name, its
+resolution and the video mode.</p>
+<hr />
+<h2 id="license">License</h2>
+<p>Tixel was developed by Javier “Dwayne Hicks” García. This application
+is distributed under the <strong>GNU GENERAL PUBLIC LICENSE version
+3</strong>. You are free to use, modify and distribute the program as
+you wish as long as you respect the terms of the license.</p>
+<p>You can find the license text in the <strong>LICENSE</strong>
+file.</p>
+</body>
+</html>
