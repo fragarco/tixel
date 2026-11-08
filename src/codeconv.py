@@ -197,7 +197,7 @@ class CodeConverter:
                 printcmd.append(printline + '\n')
         code.append(f"\n' Printing sprite example code\n")
         code.append(f"CLS\n")
-        code.append(f"PRINT CHR$(22)+CHR$(0)\n")
+        code.append(f"PRINT CHR$(22)+CHR$(1)\n")
         for pline in printcmd:
             code.append(pline)
         code.append("PRINT CHR$(22)+CHR$(0)\n\n")
