@@ -1,3 +1,3 @@
 @echo off
-call python3 src/main.py
+call python3 src/tixel.py
 @echo on

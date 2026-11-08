@@ -1,9 +1,10 @@
 # Tixel - Manual de Usuario
 
 ## Introducción
-**Tixel** es una sencilla aplicación escrita en Python para el diseño de sprites de hasta 24x24 píxeles para ordenadores **Amstrad CPC**. Su objetivo es no depender de librerías externas, de forma que se pueda utilizar en cualquier plataforma con un soporte estándar de Python 3.
 
-Una vez completado el diseño de un sprite, Tixel ofrece la posibilidad de exportarlo en varios formatos: **C**, **ensamblador** y **BASIC**.
+**Tixel** es una sencilla aplicación escrita en Python para el diseño de sprites de hasta 48x48 píxeles para ordenadores **Amstrad CPC**. Su objetivo es no depender de librerías externas, de forma que se pueda utilizar en cualquier plataforma con un soporte estándar de Python 3.
+
+Una vez completado el diseño de nuestros sprites, Tixel ofrece la posibilidad de mostrar el código necesario para usarlo en varios lenguajes: **C** (especialmente para su uso con la librería cpctelera), **ensamblador**, **BASIC** puro y **BASIC** para el compilador ABASC.
 
 ---
 
@@ -11,7 +12,7 @@ Una vez completado el diseño de un sprite, Tixel ofrece la posibilidad de expor
 
 Para ejecutar Tixel necesitas:
 
-1. **Python 3.x** instalado en tu sistema.
+1. **Python 3.8+** instalado en tu sistema.
 2. Soporte para la librería de interfaz de usuario `tkinter` (que viene incluida en la mayoría de distribuciones de Python).
 
 ---
@@ -21,31 +22,30 @@ Para ejecutar Tixel necesitas:
 1. Descarga o clona el código de Tixel desde el repositorio correspondiente.
    ```bash
    git clone https://github.com/fragarco/tixel
-   cd tixel/src
    ```
 
 2. Asegúrte de tener Python instalado correctamente:
    ```bash
-   python3 --version
+   python --version
    ```
 
 3. Ejecuta Tixel con el siguiente comando:
    ```bash
-   python3 main.py
+   python src/tixel.py
    ```
 
 ## Creación de un ejecutable
 
-Utilizando el paquete PyInstaller es sencillo generar un ejecutable de Tixel. Para ello, es necesario instalar dicho paquete mediante pip:
+La idea detrás de Tixel es propociar una herramienta que pueda funcionar en cualquier entorno con soporte para Python 3. Por ello, no se hace uso de modulos externos más allá de Tcl/Tk, la biblioteca de interfaz de usuario por defecto. Por esa misma razón, no se suministra un sistema de "build" para generar ejecutables, lo que restringiría Tixel a los sistemas operativos que podemos probar por nosotros mismos. Sin embargo, utilizando el paquete PyInstaller es sencillo generar un ejecutable de Tixel. Basta instalar dicho paquete mediante pip:
 
    ```bash
-   pip3 install pyintaller
+   pip install pyintaller
    ```
 
-Despues, desde el directorio tixel, se puede crear dicho ejecutable en la carpeta `dist` mediante el comando:
+Despues, desde el directorio tixel, podemos crear nuestro ejecutable dentro la carpeta `dist` mediante el comando:
 
    ```bash
-   pyinstall -F -w src/main -n Tixel
+   pyinstall -F -w src/tixel.py -n Tixel
    ```
 ---
 
