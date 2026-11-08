@@ -2,9 +2,10 @@
 
 ## Introducción
 
-**Tixel** es una sencilla aplicación escrita en Python para el diseño de sprites de hasta 48x48 píxeles para ordenadores **Amstrad CPC**. Su objetivo es no depender de librerías externas, de forma que se pueda utilizar en cualquier plataforma con un soporte estándar de Python 3.
+**Tixel** es un editor de sprites de escritorio para crear gráficos destinados a juegos para los **Amstrad CPC**. Está escrito en Python puro con Tkinter y no requiere de otras librerías externas.
 
-Una vez completado el diseño de nuestros sprites, Tixel ofrece la posibilidad de mostrar el código necesario para usarlo en varios lenguajes: **C** (especialmente para su uso con la librería cpctelera), **ensamblador**, **BASIC** puro y **BASIC** para el compilador ABASC.
+Un proyecto de Tixel puede contener un único sprite o una secuencia de sprites. Una vez terminado el diseño, Tixel puede generar el ódigo
+necesario para usar los sprites desde **C** (por ejemplo con cpctelera), **ensamblador**, **BASIC** puro y **BASIC** para el compilador ABASC.
 
 ---
 
@@ -12,142 +13,231 @@ Una vez completado el diseño de nuestros sprites, Tixel ofrece la posibilidad d
 
 Para ejecutar Tixel necesitas:
 
-1. **Python 3.8+** instalado en tu sistema.
-2. Soporte para la librería de interfaz de usuario `tkinter` (que viene incluida en la mayoría de distribuciones de Python).
+1. **Python 3.10 o posterior**.
+2. Soporte para `tkinter`, la librería de interfaz gráfica incluida en las instalaciones estándar de Python en Windows y macOS. En Linux suele ser necesario instalar el paquete `python3-tk`.
 
 ---
 
 ## Instalación y ejecución
 
-1. Descarga o clona el código de Tixel desde el repositorio correspondiente.
-   ```bash
-   git clone https://github.com/fragarco/tixel
-   ```
+1. Descarga o clona el repositorio de Tixel.
+2. Comprueba que Python está instalado correctamente:
 
-2. Asegúrte de tener Python instalado correctamente:
    ```bash
    python --version
    ```
 
-3. Ejecuta Tixel con el siguiente comando:
+3. Ejecuta la aplicación desde la raíz del repositorio:
+
    ```bash
    python src/tixel.py
    ```
 
-## Creación de un ejecutable
+## Creación de un ejecutable (opcional)
 
-La idea detrás de Tixel es propociar una herramienta que pueda funcionar en cualquier entorno con soporte para Python 3. Por ello, no se hace uso de modulos externos más allá de Tcl/Tk, la biblioteca de interfaz de usuario por defecto. Por esa misma razón, no se suministra un sistema de "build" para generar ejecutables, lo que restringiría Tixel a los sistemas operativos que podemos probar por nosotros mismos. Sin embargo, utilizando el paquete PyInstaller es sencillo generar un ejecutable de Tixel. Basta instalar dicho paquete mediante pip:
+Tixel no incluye un sistema de compilación propio. Si quieres utilizar la aplicación como un ejecutable, puedes usar **PyInstaller**:
 
-   ```bash
-   pip install pyintaller
-   ```
+```bash
+pip install pyinstaller
+pyinstaller -F -w src/tixel.py -n Tixel
+```
 
-Despues, desde el directorio tixel, podemos crear nuestro ejecutable dentro la carpeta `dist` mediante el comando:
+El ejecutable se generará dentro de la carpeta `dist` (por ejemplo, `dist/Tixel.exe` en Windows).
 
-   ```bash
-   pyinstall -F -w src/tixel.py -n Tixel
-   ```
 ---
 
 ## Interfaz de usuario
 
-La interfaz de Tixel es simple e intuitiva. Está dividida en cuatro áreas principales: el menú de la aplicación, el lienzo de edición, la barra de herramientas y la paleta de colores.
+La ventana principal está formada por estas áreas:
 
-### Menú de la aplicación
+- **Barra de menús**: File, Edit, Tools, Transform, View, Code y Help.
+- **Barra de herramientas**: muestra la información sobre el modo de vídeo, resolución, número de colores y la herramienta de pintado seleccionada.
+- **Lienzo de edición**: la cuadrícula donde se muestra el sprite actual.
+- **Panel izquierdo**: lista de sprites, botones de gestión, vista previa y control de animación.
+- **Paleta**: franja inferior con los colores seleccionados para el proyecto.
+- **Barra de estado**: información del píxel bajo el cursor, mensajes de la aplicación y nombre de la herramienta al pasar por los iconos.
 
-1. **File**:
-   - **New**: Borra el sprite actual y comienza un nuevo proyecto.
-   - **Open Project**: Carga un proyecto guardado previamente.
-   - **Save Project**: Guarda el proyecto actual.
-   - **Save Project As**: Guarda el proyecto con un nombre o ubicación diferentes.
-   - **Exit**: Cierra la aplicación.
+El título de la ventana muestra el nombre del proyecto y un asterisco (`*`) cuando hay cambios sin guardar.
 
-2. **Edit**:
-   - **Undo**: Deshace la última acción realizada en el lienzo.
+### Barra de menús
 
-3. **Transform**:
-   - **Horizontally**: Invierte el sprite horizontalmente.
-   - **Vertically**: Invierte el sprite verticalmente.
+#### File
 
-4. **Code**:
-   - **BASIC**: Muestra una ventana de texto con el sprite en formato BASIC.
-   - **C**: Muestra una ventana de texto con el sprite en formato C.
-   - **Assembly**: Muestra una ventana de texto con el sprite en formato ensamblador.
+- **New Project...** (`Ctrl+N`): crea un proyecto nuevo. El diálogo permite elegir el modo de vídeo y la resolución. Estos parámetros no se pueden cambiar una vez se crea el proyecto.
+- **Open Project...** (`Ctrl+O`): carga un archivo `.tixel`.
+- **Save** (`Ctrl+S`): guarda el proyecto actual.
+- **Save As...**: guarda el proyecto con otro nombre o en otra ubicación.
+- **Exit**: cierra la aplicación.
 
-5. **Help**:
-   - **About**: Muestra información sobre Tixel, su autor y su versión.
+Si hay cambios sin guardar, al crear o abrir otro proyecto (y al salir) Tixel pregunta si deseas guardar, descartar los cambios o cancelar la operación.
 
-### Lienzo de edición
+#### Edit
 
-Esta zona muestra un grid de hasta 24x24 píxeles. Sin embargo, es posible configurar el sprite para usar menos pixeles a través de la opción del menú `File`->`New`. La zona del grid que queda fuera de la resolución deseada se pinta en grís, mientras que la zona activa se pinta inicialmente con el color por defecto elegido en el dialogo de creación.
+- **Undo** (`Ctrl+Z`) y **Redo** (`Ctrl+Y`): deshacer y rehacer.
+- **Copy Sprite** (`Ctrl+C`) y **Paste Sprite** (`Ctrl+V`): copian y pegan el sprite actual. El pegado solo es posible si el sprite copiado tiene las mismas dimensiones que el destino.
+- **Add Sprite**: inserta un sprite vacío después del actual.
+- **Delete Sprite**: elimina el sprite actual (siempre debe quedar al menos uno) tras pedir confirmación.
+- **Clear Sprite**: borra todo el contenido del sprite actual.
 
-Los píxeles del lienzo se pueden colorear usando el botón izquierdo o derecho del ratón, según que herramienta de edición esté seleccionada: "Draw", "Erase", "Fill" o "Replace".
+Los sprites se pueden reordenar con los botones **Up** y **Down** del panel izquierdo, o duplicar con **Duplicate**.
 
-### Herramientas de edición
-   - **Draw**: Colorea píxeles del lienzo usando el color primario (botón izquierdo del ratón) o el secundario (botón derecho del ratón). Los colores primario y secundario se seleccionan de la paleta pinchando en la paleta con botón izquierdo o el derecho, según el color a actualizar.
-   - **Erase**: Colorea píxeles del lienzo utilizando el color seleccionado para "borrar". Dicho color se selecciona con el botón izquierdo del rato de la paleta de colores cuando esta herramienta está seleccionada. Su valor inicial se puede elegir en el dialog de creación de un nuevo sprite.
-   - **Fill**: Rellena áreas contiguas del lienzo con el color primario o secundario, dependiendo del botón del ratón utilizado.
-   - **Replace**: Sustituye un color existente en el lienzo por el color primario o secundario, dependiendo del botón del ratón utilizado.
+#### Tools
 
-### La paleta de colores
-Esta zona contiene una muestra de los 27 colores soportados por los ordenadores Amstrad CPC. Obviamente, estas máquinas no pueden mostrar los 27 colores a la vez. El número máximo de colores depende del modo gráfico seleccionado: Mode 0 (16 colores), Mode 1 (4 colores) o Mode 2 (2 colores).
+- **Pencil**: herramienta de dibujo píxel a píxel (predeterminada).
+- **Fill**: herramienta de relleno de un área.
 
-Sin embargo, Tixel no impone esta restricción al usuario mientras diseña su sprite. Cuando se emite el código del sprite desde cualquiera de las entradas del menú `Code`, se comprueba si se ha sobrepasado el número máximo de colores y, si ese es el caso, se remplazan los colores menos abundantes y sobrantes por el más parecido de los más utilizados. 
+Las mismas herramientas están disponibles como botones de icono en la barra de herramientas. La herramienta seleccionada aparece resaltada.
+
+#### Transform
+
+- **Flip Horizontally**: refleja el sprite actual de izquierda a derecha.
+- **Flip Vertically**: refleja el sprite actual de arriba abajo.
+
+Cada transformación afecta solo al sprite actual y se puede deshacer con Ctrl+Z (Undo).
+
+#### View
+
+- **Grid** (`Ctrl+G`): muestra u oculta la cuadrícula del lienzo.
+
+#### Code
+
+- **BASIC**: genera BASIC puro.
+- **BASIC (ABASC)**: genera BASIC compatible con el compilador ABASC y sus librerías cpctelera y cpcrslib.
+- **C**: código en C, por ejemplo, utilizable con la librería cpctelera y el compilador SDCC.
+- **ASM**: código en ensamblador con sintáxis MAXAM (utilizable con ABASM o WinApe).
+
+El resultado se muestra en una ventana de texto desde la que se puede copiar.
+
+#### Help
+
+- **Quick Help**: resumen rápido del funcionamiento de la aplicación.
+- **About Tixel**: información sobre la versión y el propósito de Tixel.
+
+### Area edición de Sprites
+
+La ventana principal muestra el sprite actual con una cuadrícula opcional. La resolución máxima es de **48x48 píxeles** y se elige al crear el proyecto; no se puede cambiar después. El tamaño de las celdas se ajusta automáticamente para que el sprite quepa en la ventana.
+
+Para dibujar:
+
+- **Botón izquierdo**: aplica la herramienta activa con el color de paleta seleccionado.
+- **Botón derecho**: aplica la herramienta activa con el color **0**.
+
+Mientras se reproduce la animación, el lienzo no acepta cambios.
+
+### Lista de sprites y vista previa
+
+El panel izquierdo contiene la lista de sprites que forman la animación:
+
+- **Add**: añade un sprite vacío después del actual.
+- **Duplicate**: duplica el sprite actual y lo añade justo a continuación.
+- **Delete**: elimina el sprite actual (siempre debe haber uno como mínimo).
+- **Up / Down**: cambian el orden del sprite en la lista.
+
+Todos los sprites del proyecto comparten la misma resolución y la misma paleta. La vista previa muestra el sprite actual o, durante la animación, el fotograma correspondiente. El botón **Play/Stop** inicia o detiene la animación; para reproducirla se necesitan al menos dos sprites.
+
+### Paleta de colores
+
+La paleta del proyecto se muestra en la parte inferior con un número por color. Haz clic en una entrada para seleccionarla. El color seleccionado se usa con el botón izquierdo del ratón.
+
+- **Add Color...**: añade un color de la paleta de 27 colores del Amstrad CPC. El botón se desactiva al alcanzar el máximo del modo de vídeo.
+- **Change Color...**: cambia el color actual por otro. También se puede hacer doble clic sobre la entrada de la paleta. Todos los píxeles que usan ese índice cambian al nuevo color.
+- **Remove Color**: elimina el color seleccionado tras confirmarlo. Los píxeles que lo usaban pasan al color 0 y los índices superiores se desplazan una posición. La paleta debe conservar al menos un color.
+
+El máximo de colores depende del modo de vídeo y Tixel lo aplica mientras se edita:
+
+| Modo | Colores máximos |
+| --- | --- |
+| Mode 0 | 16 |
+| Mode 1 | 4 |
+| Mode 2 | 2 |
+
+La paleta inicial contiene dos colores. El color de índice 0 actúa como color de fondo. Solo se pueden elegir colores de la paleta oficial del Amstrad CPC.
+
+### Barra de estado
+
+Muestra información contextual:
+
+- Coordenadas del píxel, índice de paleta y nombre del color al mover el ratón sobre el lienzo.
+- Nombre de la herramienta al pasar sobre los iconos de la barra.
+- Mensajes como el proyecto cargado o guardado, o si no hay nada que deshacer o rehacer.
 
 ---
 
-## Creación de Sprites
+## Transformaciones
 
-### Paso a Paso
+El menú **Transform** refleja (modo espejo) el sprite actual:
 
-1. **Abre Tixel**:
-   - Crear un nuevo proyecto con `File`->`New`.
-   - Elige la resolución de tu sprite y el modo gráfico en el que deseas utilizarlo en un Amstrad CPC.
-   - Elige tu color de fondo por defecto y pincha en el botón `Create`.
-  
-2. **Diseña tu sprite**:
-   - Usa el lienzo de edición para "pintar" cada píxel.
-   - Selecciona colores de la paleta utilizando el botón izquierdo o el derecho del ratón.
-   - Alterna entre las herramientas `Draw`, `Erase`, `Fill` y `Replace` para completar tu sprite.
+- **Flip Horizontally**: intercambia las columnas de izquierda a derecha.
+- **Flip Vertically**: intercambia las filas de arriba abajo.
 
-3. **Guarda tu trabajo**:
-   - Usa la opción `Save Project` o `Save Project As` del menú `File` para guardar el sprite como un archivo `.tpj` (Tixel ProJect).
-
-4. **Exporta el sprite**:
-   - Ve al menú `Code` y selecciona el formato de exportación adecuado para tu proyecto de desarrollo para el Amstrad CPC.
+Las transformaciones se pueden deshacer y no afectan a los demás sprites del proyecto.
 
 ---
 
-## Ejemplo de exportación
+## Creación de un sprite paso a paso
 
-### Exportación en C
+1. **Crea el proyecto**:
+   - `File > New Project...`.
+   - Elige el modo de vídeo (0, 1 o 2) y la resolución (de 1x1 a 48x48).
+   - Pulsa **Create**. El modo y la resolución ya no se podrán cambiar.
+
+2. **Prepara la paleta**:
+   - La paleta empieza con dos colores; añade más con **Add Color...** hasta el máximo permitido por el modo.
+   - Selecciona el color con el que quieres dibujar.
+
+3. **Dibuja**:
+   - Elige **Pencil** o **Fill** en el menú Tools o en la barra de herramientas.
+   - Usa el botón izquierdo con el color seleccionado y el derecho para pintar con el color 0.
+   - Usa `Ctrl+Z`/`Ctrl+Y` para corregir.
+
+4. **Crea la animación** (opcional):
+   - Añade o duplica sprites con los botones del panel derecho.
+   - Reordénalos con **Up/Down** y pulsa **Play** para ver la animación.
+
+5. **Guarda el proyecto**:
+   - `File > Save` o `File > Save As...`. El archivo tendrá extensión `.tixel`.
+
+6. **Exporta el código**:
+   - Abre el menú **Code** y elige BASIC, BASIC (ABASC), C o ASM.
+
+---
+
+## Exportación de código
+
+El menú **Code** genera el código de la paleta y de cada sprite del proyecto, teniendo en cuenta el modo de vídeo y la disposición de la memoria de vídeo del Amstrad CPC. Los formatos disponibles son:
+
+- **BASIC**: paleta con instrucciones `INK`, definiciones `SYMBOL` y un ejemplo de impresión del sprite.
+- **BASIC (ABASC)**: paleta y datos de imagen para el compilador ABASC usando el comando `ASM`.
+- **C**: arrays `const unsigned char` para la paleta y para cada sprite.
+- **ASM**: etiquetas y directivas `db` para la paleta y para cada sprite.
+
+Ejemplo del código generado en C:
+
 ```c
-unsigned char sprite[] = {
-    0x00, 0x3C, 0x42, 0x81, 0x81, 0x42, 0x3C, 0x00,
-    // Datos adicionales...
+// Palette of 2 colors
+const unsigned char PAL_MISPRITE[2] = { 0x04, 0x03 };
+
+// mode 0, 8x4 pixels
+const unsigned char SP_MISPRITE00[16] = {
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 ```
 
-### Exportación en ensamblador
-```assembly
-SPRITE:
-    DB 0x00, 0x3C, 0x42, 0x81, 0x81, 0x42, 0x3C, 0x00
-    ; Datos adicionales...
+Ejemplo del código generado en ensamblador:
+
+```asm
+; Palette of 2 colors
+pal_misprite:
+    db 0x04, 0x03
+
+; mode 0, 8x4 pixels
+sp_misprite00:
+    db &00, &00, &00, &00, &00, &00, &00, &00
+    db &00, &00, &00, &00, &00, &00, &00, &00
 ```
 
-### Exportación en BASIC
-```basic
-10 DATA 0, 60, 66, 129, 129, 66, 60, 0
-20 REM Datos adicionales...
-```
-
----
-
-## Consejos de Uso
-
-- **Limpieza del lienzo**: Si necesitas empezar de cero, usa la opción **New** del menú **File**.
-- **Prueba tus sprites**: Exporta tu sprite y cárgalo en un emulador o programa de desarrollo para el Amstrad CPC para verificar su apariencia.
-- **Optimización**: Asegúrate de que tu sprite utiliza solo los colores disponibles para el modo gráfico que seleccionaste.
+Los nombres y el número de bytes dependen del nombre del proyecto, de su resolución y del modo de vídeo.
 
 ---
 
