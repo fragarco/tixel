@@ -84,12 +84,20 @@ Sprites can be reordered with the **Up** and **Down** buttons in the left panel,
 
 - **Pencil**: pixel-by-pixel drawing tool (default).
 - **Fill**: area fill tool.
+- **Circle**: circle drawing tool.
 
 With the Pencil selected, **Shift + left click** draws a straight line from the
 last pixel painted with the currently selected palette color to the clicked
 pixel. Consecutive Shift+clicks chain the segments, letting you draw polylines.
 If there is no previous pixel, or it was painted with a different color, the
 click simply paints the clicked pixel as usual.
+
+The **Circle** tool draws a ring with two clicks: the first click sets the
+center and the second one sets the radius (the distance to the clicked pixel).
+Use the left button on the second click to paint the ring with the selected
+palette color, or the right button to paint it with color **0**. Switching
+tool or sprite, or undoing/redoing, discards a pending center: click again to
+set a new one.
 
 The same tools are available as icon buttons in the toolbar. The selected tool appears highlighted.
 
@@ -127,6 +135,7 @@ To draw:
 - **Left button**: applies the active tool with the selected palette color.
 - **Right button**: applies the active tool with color **0**.
 - **Shift + left button** (Pencil): draws a line from the last pixel painted with the selected color; see [Tools](#tools).
+- **Two clicks** (Circle): first click sets the center, second click sets the radius and paints the ring; see [Tools](#tools).
 
 While the animation is playing, the canvas does not accept changes.
 

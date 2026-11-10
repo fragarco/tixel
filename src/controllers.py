@@ -69,6 +69,7 @@ class TixelController:
     _pixel_hint: tuple[int, int] | None
     _stroke_recorded: bool
     _line_anchor: _LineAnchor | None
+    _circle_center: tuple[int, int] | None
 
     def __init__(self, view: "TixelView") -> None:
         self.view = view
@@ -86,6 +87,7 @@ class TixelController:
         self._pixel_hint = None
         self._stroke_recorded = True
         self._line_anchor = None
+        self._circle_center = None
 
         self.view.set_controller(self)
         self.set_project(Project(), None)
@@ -119,6 +121,7 @@ class TixelController:
             return
         self._restore(snapshot)
         self._reset_line_anchor()
+        self._reset_circle_center()
         self.mark_dirty()
         self.mark(*Change.ALL)
         self.notify()
@@ -131,6 +134,7 @@ class TixelController:
             return
         self._restore(snapshot)
         self._reset_line_anchor()
+        self._reset_circle_center()
         self.mark_dirty()
         self.mark(*Change.ALL)
         self.notify()
@@ -163,6 +167,12 @@ class TixelController:
         """
         self._line_anchor = None
 
+    def _reset_circle_center(self) -> None:
+        """
+        Forget the pending center of the two-click Circle tool.
+        """
+        self._circle_center = None
+
     def set_project(self, project: Project, file_path: str | None) -> None:
         self.stop_animation()
         self.project = project
@@ -177,6 +187,7 @@ class TixelController:
         self.history.reset()
         self._stroke_recorded = True
         self._reset_line_anchor()
+        self._reset_circle_center()
         self.mark(*Change.ALL)
         self.mark(Change.TOOL)
         self.notify()
@@ -199,6 +210,10 @@ class TixelController:
         if self.active_tool is Tool.FILL:
             if stroke_start:
                 self.fill(x, y, erase)
+            return
+        if self.active_tool is Tool.CIRCLE:
+            if stroke_start:
+                self.circle_click(x, y, erase)
             return
         if shift and stroke_start and not erase and self._draw_line_from_anchor(x, y):
             return
@@ -267,6 +282,34 @@ class TixelController:
         self.mark_dirty()
         self.notify()
 
+    def circle_click(self, x: int, y: int, erase: bool = False) -> None:
+        """
+        Two-click circle drawing: the first click stores the center, the
+        second one sets the radius and paints the circle with the selected
+        color (or color 0 if right button was used).
+        """
+        if self.animating:
+            return
+        if not (0 <= x < self.project.width and 0 <= y < self.project.height):
+            return
+        if self._circle_center is None:
+            self._circle_center = (x, y)
+            self.view.set_status("Circle: click the edge to set the radius "
+                                 "(left click paints with the selected color, right click with color 0).")
+            return
+        cx, cy = self._circle_center
+        radius = max(abs(x - cx), abs(y - cy))
+        value = 0 if erase else self.selected_palette_index
+        snapshot = self._snapshot()
+        if self.sprite.draw_circle(cx, cy, radius, value) == 0:
+            return
+        self.history.record(snapshot)
+        self._circle_center = None
+        self.mark(Change.PIXELS)
+        self.mark_dirty()
+        self.notify()
+        self.view.set_status(f"Circle centered at ({cx}, {cy}) with radius {radius} and palette color {value}.")
+
     def on_canvas_motion(self, x: int, y: int) -> None:
         if 0 <= x < self.project.width and 0 <= y < self.project.height:
             value = self.sprite.get(x, y)
@@ -287,6 +330,8 @@ class TixelController:
         if not isinstance(tool, Tool) or tool == self.active_tool:
             return
         self.active_tool = tool
+        self._reset_line_anchor()
+        self._reset_circle_center()
         self.mark(Change.TOOL)
         self.notify()
         self.view.set_status(f"{tool.value} tool selected.")
@@ -362,13 +407,14 @@ class TixelController:
             return
         self.current_sprite_index = index
         self._reset_line_anchor()
+        self._reset_circle_center()
         self.mark(Change.PIXELS)
         self.notify()
 
     def select_sprite(self, index: int) -> None:
-        # Internal helper: queues refreshes; the caller's public use-case notifies.
         self.current_sprite_index = max(0, min(index, len(self.project.sprites) - 1))
         self._reset_line_anchor()
+        self._reset_circle_center()
         self.mark(Change.SPRITES, Change.PIXELS)
 
     def add_sprite(self) -> None:
@@ -590,7 +636,8 @@ class TixelController:
             "Shift+left click draws a line from the last pixel painted with the "
             "selected color (polyline chaining is supported); Fill floods the "
             "connected region of the clicked color with the "
-            "selected palette color.\n\n"
+            "selected palette color; Circle draws a ring with two clicks "
+            "(center first, then the edge).\n\n"
             "Work area: left click applies the active tool with the selected "
             "palette color, right click applies it with color 0.\n\n"
             "Transform > Flip Horizontally / Flip Vertically acts on the "

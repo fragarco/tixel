@@ -122,6 +122,40 @@ class TestSprite(unittest.TestCase):
         self.assertEqual(changed, 2)
         self.assertEqual(s.pixels, [[1, 1], [0, 0]])
 
+    def test_draw_circle_radius_zero_is_center(self) -> None:
+        s = Sprite(5, 5)
+        self.assertEqual(s.draw_circle(2, 2, 0, 1), 1)
+        self.assertEqual(s.get(2, 2), 1)
+
+    def test_draw_circle_radius_one(self) -> None:
+        s = Sprite(5, 5)
+        self.assertEqual(s.draw_circle(2, 2, 1, 1), 4)
+        for x, y in ((3, 2), (1, 2), (2, 3), (2, 1)):
+            self.assertEqual(s.get(x, y), 1)
+        self.assertEqual(s.get(2, 2), 0)
+
+    def test_draw_circle_radius_two(self) -> None:
+        s = Sprite(11, 11)
+        expected = {(7, 5), (3, 5), (5, 7), (5, 3),
+                    (7, 6), (3, 6), (7, 4), (3, 4),
+                    (6, 7), (4, 7), (6, 3), (4, 3)}
+        self.assertEqual(s.draw_circle(5, 5, 2, 1), len(expected))
+        for y in range(11):
+            for x in range(11):
+                self.assertEqual(s.get(x, y) == 1, (x, y) in expected)
+
+    def test_draw_circle_noop_returns_zero(self) -> None:
+        s = Sprite(5, 5)
+        s.draw_circle(2, 2, 1, 1)
+        self.assertEqual(s.draw_circle(2, 2, 1, 1), 0)
+
+    def test_draw_circle_clips_out_of_range(self) -> None:
+        s = Sprite(5, 5)
+        changed = s.draw_circle(0, 0, 4, 1)
+        self.assertGreater(changed, 0)
+        self.assertEqual(s.get(4, 0), 1)
+        self.assertEqual(s.get(0, 4), 1)
+
     def test_flip_horizontal(self) -> None:
         s = Sprite(3, 2, [[0, 1, 2], [3, 4, 5]])
         s.flip_horizontal()

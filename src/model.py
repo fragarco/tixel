@@ -116,6 +116,31 @@ class Sprite:
                 y += sy
         return changed
 
+    def draw_circle(self, cx: int, cy: int, radius: int, value: int) -> int:
+        """
+        Paint with value the cells of the circle centered at (cx, cy) using
+        the midpoint circle algorithm.
+        """
+        changed = 0
+        x = radius
+        y = 0
+        err = 1 - radius
+        while x >= y:
+            for px, py in ((cx + x, cy + y), (cx - x, cy + y),
+                           (cx + x, cy - y), (cx - x, cy - y),
+                           (cx + y, cy + x), (cx - y, cy + x),
+                           (cx + y, cy - x), (cx - y, cy - x)):
+                if 0 <= px < self.width and 0 <= py < self.height and self.get(px, py) != value:
+                    self.set(px, py, value)
+                    changed += 1
+            y += 1
+            if err < 0:
+                err += 2 * y + 1
+            else:
+                x -= 1
+                err += 2 * (y - x) + 1
+        return changed
+
     def flip_horizontal(self) -> None:
         self.pixels = [list(reversed(row)) for row in self.pixels]
 

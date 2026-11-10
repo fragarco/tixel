@@ -45,6 +45,7 @@ class Tool(Enum):
     """
     PENCIL = "Pencil"
     FILL   = "Fill"
+    CIRCLE = "Circle"
 
 # List of colors in Firmware order (0..26)
 CPC_RGB_COLORS = [
