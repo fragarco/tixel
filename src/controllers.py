@@ -18,7 +18,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307 USA
 
 import json
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, NamedTuple
 from codeconv import CodeConverter
 
 from constants import (
@@ -40,6 +40,17 @@ from history import History, Snapshot
 if TYPE_CHECKING:
     from views import TixelView
 
+
+class _LineAnchor(NamedTuple):
+    """
+    Origin of the Shift+click pencil line. It stores x,y position plus the
+    color value.
+    """
+    x: int
+    y: int
+    value: int
+
+
 class TixelController:
  
     view: "TixelView"
@@ -57,6 +68,7 @@ class TixelController:
     _changed: set[str]
     _pixel_hint: tuple[int, int] | None
     _stroke_recorded: bool
+    _line_anchor: _LineAnchor | None
 
     def __init__(self, view: "TixelView") -> None:
         self.view = view
@@ -73,9 +85,10 @@ class TixelController:
         self._changed = set()
         self._pixel_hint = None
         self._stroke_recorded = True
+        self._line_anchor = None
 
         self.view.set_controller(self)
-        self.set_project(Project(), None)  # sole assignment of self.project
+        self.set_project(Project(), None)
 
 
     @property
@@ -105,6 +118,7 @@ class TixelController:
             self.view.set_status("Nothing to undo.")
             return
         self._restore(snapshot)
+        self._reset_line_anchor()
         self.mark_dirty()
         self.mark(*Change.ALL)
         self.notify()
@@ -116,6 +130,7 @@ class TixelController:
             self.view.set_status("Nothing to redo.")
             return
         self._restore(snapshot)
+        self._reset_line_anchor()
         self.mark_dirty()
         self.mark(*Change.ALL)
         self.notify()
@@ -142,6 +157,12 @@ class TixelController:
         self.dirty = dirty
         self.mark(Change.META)
 
+    def _reset_line_anchor(self) -> None:
+        """
+        Forget the Shift+click line origin.
+        """
+        self._line_anchor = None
+
     def set_project(self, project: Project, file_path: str | None) -> None:
         self.stop_animation()
         self.project = project
@@ -153,24 +174,61 @@ class TixelController:
         self.dirty = False
         self._changed.clear()
         self._pixel_hint = None
-        self.history.reset()          # New/Open project: history is runtime-only
+        self.history.reset()
         self._stroke_recorded = True
+        self._reset_line_anchor()
         self.mark(*Change.ALL)
         self.mark(Change.TOOL)
         self.notify()
-        self.view.set_status("Pencil tool: left click paints with the selected color, right click paints color 0.")
+        self.view.set_status("Pencil tool: left click paints with the selected color, right click paints "
+                             "color 0. Shift+left click draws a line from the last pixel painted.")
 
 
 
-    def on_canvas_click(self, x: int, y: int, erase: bool = False, stroke_start: bool = False) -> None:
+    def on_canvas_click(self,
+                        x: int,
+                        y: int,
+                        erase: bool = False,
+                        stroke_start: bool = False,
+                        shift: bool = False) -> None:
         """
-        Dispatch a canvas click to the active tool.
+        Dispatch a canvas click to the active tool. Shift+click with the
+        pencil draws a line from the last pixel painted with the selected
+        color. When that is not possible it behaves as a regular click.
         """
         if self.active_tool is Tool.FILL:
             if stroke_start:
                 self.fill(x, y, erase)
             return
+        if shift and stroke_start and not erase and self._draw_line_from_anchor(x, y):
+            return
         self.on_paint(x, y, erase, stroke_start)
+
+    def _draw_line_from_anchor(self, x: int, y: int) -> bool:
+        """
+        Paint the pencil line from the anchor to (x, y) with the selected
+        palette color as one undo step. Returns False if it ends painting
+        nothing.
+        """
+        if self.animating:
+            return False
+        if not (0 <= x < self.project.width and 0 <= y < self.project.height):
+            return False
+        value = self.selected_palette_index
+        anchor = self._line_anchor
+        if anchor is None or anchor.value != value:
+            self.view.set_status("No line origin for this color: painted single pixel.")
+            return False
+        snapshot = self._snapshot()
+        if self.sprite.draw_line(anchor.x, anchor.y, x, y, value) == 0:
+            return False
+        self.history.record(snapshot)
+        self._line_anchor = _LineAnchor(x, y, value)
+        self.mark(Change.PIXELS)
+        self.mark_dirty()
+        self.notify()
+        self.view.set_status(f"Line ({anchor.x}, {anchor.y}) -> ({x}, {y}) with palette color {value}.")
+        return True
 
     def on_paint(self, x: int, y: int, erase: bool = False, stroke_start: bool = False) -> None:
         if self.animating:
@@ -183,10 +241,10 @@ class TixelController:
         if stroke_start:
             self._stroke_recorded = False
         if not self._stroke_recorded:
-            # One undo step per logical stroke: snapshot the first change only.
             self.history.record(self._snapshot())
             self._stroke_recorded = True
         self.sprite.set(x, y, value)
+        self._line_anchor = _LineAnchor(x, y, value)
         self.mark(Change.PIXELS)
         self._pixel_hint = (x, y)
         self.mark_dirty()
@@ -194,7 +252,7 @@ class TixelController:
 
     def fill(self, x: int, y: int, erase: bool = False) -> None:
         """
-        Flood-fill the connected region around (x, y) with one undo step.
+        Fill the connected region around (x, y) with one undo step.
         """
         if self.animating:
             return
@@ -293,6 +351,7 @@ class TixelController:
         for sprite in self.project.sprites:
             sprite.remap(mapping)
         self.selected_palette_index = min(index, len(palette) - 1)
+        self._reset_line_anchor()
         self.mark_dirty()
         self.mark(Change.PALETTE, Change.PIXELS)
         self.notify()
@@ -302,12 +361,14 @@ class TixelController:
         if index == self.current_sprite_index:
             return
         self.current_sprite_index = index
+        self._reset_line_anchor()
         self.mark(Change.PIXELS)
         self.notify()
 
     def select_sprite(self, index: int) -> None:
         # Internal helper: queues refreshes; the caller's public use-case notifies.
         self.current_sprite_index = max(0, min(index, len(self.project.sprites) - 1))
+        self._reset_line_anchor()
         self.mark(Change.SPRITES, Change.PIXELS)
 
     def add_sprite(self) -> None:
@@ -352,6 +413,7 @@ class TixelController:
     def clear_sprite(self) -> None:
         self.history.record(self._snapshot())
         self.sprite.clear()
+        self._reset_line_anchor()
         self.mark_dirty()
         self.mark(Change.PIXELS)
         self.notify()
@@ -391,6 +453,7 @@ class TixelController:
         pasted.remap({i: i for i in range(len(self.project.palette))})
         self.history.record(self._snapshot())
         self.project.sprites[self.current_sprite_index] = pasted
+        self._reset_line_anchor()
         self.mark_dirty()
         self.mark(Change.PIXELS)
         self.notify()
@@ -523,8 +586,10 @@ class TixelController:
             "Bottom bar: the project palette. Add colors from the 27 available "
             "colors, up to the limit of the video mode (Mode 0: 16, Mode 1: 4, "
             "Mode 2: 2).\n\n"
-            "Tools menu / toolbar: Pencil paints single pixels by dragging; "
-            "Fill floods the connected region of the clicked color with the "
+            "Tools menu / toolbar: Pencil paints single pixels by dragging and "
+            "Shift+left click draws a line from the last pixel painted with the "
+            "selected color (polyline chaining is supported); Fill floods the "
+            "connected region of the clicked color with the "
             "selected palette color.\n\n"
             "Work area: left click applies the active tool with the selected "
             "palette color, right click applies it with color 0.\n\n"

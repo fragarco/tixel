@@ -86,6 +86,12 @@ Los sprites se pueden reordenar con los botones **Up** y **Down** del panel izqu
 - **Pencil**: herramienta de dibujo píxel a píxel (predeterminada).
 - **Fill**: herramienta de relleno de un área.
 
+Con **Pencil** seleccionada, **Shift + clic izquierdo** dibuja una línea
+recta desde el último píxel pintado con el color de paleta seleccionado hasta
+el píxel pulsado. Si encadenas varios clics con Shift dibujarás polilíneas.
+Si no hay un píxel anterior, o este se pintó con otro color, el clic pinta
+simplemente el píxel pulsado como de costumbre.
+
 Las mismas herramientas están disponibles como botones de icono en la barra de herramientas. La herramienta seleccionada aparece resaltada.
 
 #### Transform
@@ -121,6 +127,7 @@ Para dibujar:
 
 - **Botón izquierdo**: aplica la herramienta activa con el color de paleta seleccionado.
 - **Botón derecho**: aplica la herramienta activa con el color **0**.
+- **Shift + botón izquierdo** (Pencil): dibuja una línea desde el último píxel pintado con el color seleccionado; ver [Tools](#tools).
 
 Mientras se reproduce la animación, el lienzo no acepta cambios.
 

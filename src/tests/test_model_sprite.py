@@ -78,6 +78,50 @@ class TestSprite(unittest.TestCase):
         self.assertEqual(s.flood_fill(2, 2, 1), 0)
         self.assertEqual(s.pixels, [[0, 0], [0, 0]])
 
+    def test_draw_line_horizontal(self) -> None:
+        s = Sprite(4, 4)
+        changed = s.draw_line(0, 1, 3, 1, 1)
+        self.assertEqual(changed, 4)
+        self.assertEqual(s.pixels[1], [1, 1, 1, 1])
+
+    def test_draw_line_vertical(self) -> None:
+        s = Sprite(4, 4)
+        changed = s.draw_line(2, 0, 2, 3, 1)
+        self.assertEqual(changed, 4)
+        self.assertEqual([s.get(2, y) for y in range(4)], [1, 1, 1, 1])
+
+    def test_draw_line_diagonal(self) -> None:
+        s = Sprite(4, 4)
+        changed = s.draw_line(0, 0, 3, 3, 2)
+        self.assertEqual(changed, 4)
+        for x, y in ((0, 0), (1, 1), (2, 2), (3, 3)):
+            self.assertEqual(s.get(x, y), 2)
+
+    def test_draw_line_shallow_slope(self) -> None:
+        s = Sprite(8, 4)
+        changed = s.draw_line(0, 0, 7, 2, 1)
+        self.assertEqual(changed, 8)          # One cell per column (dx dominates)
+        for x in range(8):
+            self.assertTrue(any(s.get(x, y) == 1 for y in range(4)))
+
+    def test_draw_line_reversed_endpoints_draw_same_cells(self) -> None:
+        a, b = Sprite(6, 6), Sprite(6, 6)
+        a.draw_line(1, 4, 5, 0, 1)
+        b.draw_line(5, 0, 1, 4, 1)
+        self.assertEqual(a.pixels, b.pixels)
+
+    def test_draw_line_single_point_and_noop(self) -> None:
+        s = Sprite(3, 3)
+        self.assertEqual(s.draw_line(1, 1, 1, 1, 2), 1)
+        self.assertEqual(s.get(1, 1), 2)
+        self.assertEqual(s.draw_line(1, 1, 1, 1, 2), 0)   # already painted
+
+    def test_draw_line_skips_out_of_range_cells(self) -> None:
+        s = Sprite(2, 2)
+        changed = s.draw_line(-2, 0, 3, 0, 1)
+        self.assertEqual(changed, 2)
+        self.assertEqual(s.pixels, [[1, 1], [0, 0]])
+
     def test_flip_horizontal(self) -> None:
         s = Sprite(3, 2, [[0, 1, 2], [3, 4, 5]])
         s.flip_horizontal()

@@ -736,10 +736,14 @@ class TixelView(tk.Tk):
     def _handle_paint_event(self, event: tk.Event, erase: bool = False, stroke_start: bool = False) -> None:
         if not self.ctrl:
             return
+        state = event.state if isinstance(event.state, int) else 0
+        shift = bool(state & 0x0001)
+        if shift and not stroke_start:
+            return    # Do not paint stray pixels while dragging with Shift held
         cell = self.cell_size
         x = event.x // cell
         y = event.y // cell
-        self.ctrl.on_canvas_click(x, y, erase, stroke_start)
+        self.ctrl.on_canvas_click(x, y, erase, stroke_start, shift)
 
     def _handle_motion_event(self, event: tk.Event) -> None:
         if not self.ctrl:

@@ -89,6 +89,33 @@ class Sprite:
                     pending.append((nx, ny))
         return changed
 
+    def draw_line(self, x0: int, y0: int, x1: int, y1: int, value: int) -> int:
+        """
+        Paint with value the cells of the straight line that goes from (x0, y0)
+        to (x1, y1). Returns the number of pixels changed.
+        """
+        dx = abs(x1 - x0)
+        dy = -abs(y1 - y0)
+        sx = 1 if x0 < x1 else -1
+        sy = 1 if y0 < y1 else -1
+        err = dx + dy
+        x, y = x0, y0
+        changed = 0
+        while True:
+            if 0 <= x < self.width and 0 <= y < self.height and self.get(x, y) != value:
+                self.set(x, y, value)
+                changed += 1
+            if x == x1 and y == y1:
+                break
+            e2 = 2 * err
+            if e2 >= dy:
+                err += dy
+                x += sx
+            if e2 <= dx:
+                err += dx
+                y += sy
+        return changed
+
     def flip_horizontal(self) -> None:
         self.pixels = [list(reversed(row)) for row in self.pixels]
 

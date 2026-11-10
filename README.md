@@ -50,6 +50,7 @@ python tixel.py
 | Deshacer | Ctrl+Z |
 | Rehacer | Ctrl+Y |
 | Mostrar/ocultar cuadrícula | Ctrl+G |
+| Dibujar línea desde el último píxel (Lápiz) | Shift+clic izquierdo |
 
 ### Licencia
 
@@ -107,6 +108,7 @@ python tixel.py
 | Undo | Ctrl+Z |
 | Redo | Ctrl+Y |
 | Toggle grid | Ctrl+G |
+| Draw line from last pixel (Pencil) | Shift+left click |
 
 ### License
 

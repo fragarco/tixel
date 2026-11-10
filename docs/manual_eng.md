@@ -85,6 +85,12 @@ Sprites can be reordered with the **Up** and **Down** buttons in the left panel,
 - **Pencil**: pixel-by-pixel drawing tool (default).
 - **Fill**: area fill tool.
 
+With the Pencil selected, **Shift + left click** draws a straight line from the
+last pixel painted with the currently selected palette color to the clicked
+pixel. Consecutive Shift+clicks chain the segments, letting you draw polylines.
+If there is no previous pixel, or it was painted with a different color, the
+click simply paints the clicked pixel as usual.
+
 The same tools are available as icon buttons in the toolbar. The selected tool appears highlighted.
 
 #### Transform
@@ -120,6 +126,7 @@ To draw:
 
 - **Left button**: applies the active tool with the selected palette color.
 - **Right button**: applies the active tool with color **0**.
+- **Shift + left button** (Pencil): draws a line from the last pixel painted with the selected color; see [Tools](#tools).
 
 While the animation is playing, the canvas does not accept changes.
 
